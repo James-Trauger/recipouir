@@ -1,0 +1,13 @@
+package templates
+
+templ Navbar(pages map[string]templ.SafeURL, active string) {
+    <div class="navbar">
+    for name, page := range pages {
+        if name == active {
+            <a class="active" href={page}>{ name }</a>
+        } else {
+            <a href={page}>{ name }</a>
+        }
+    }
+    </div>
+}
