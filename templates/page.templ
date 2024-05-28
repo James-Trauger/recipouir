@@ -1,0 +1,19 @@
+package templates 
+
+
+templ Page(active string, styles []string) {
+    <!DOCTYPE html>
+    <html lang="en">
+        <head> 
+            <title>Recipouir</title>
+            <meta charset="UTF-8"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
+            for cs := range styles {
+                <link rel="stylesheet" href={cs}></link>
+            }  
+        </head>   
+        <body> 
+            @Navbar(routes, active)
+        </body>
+    </html>
+}

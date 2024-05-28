@@ -12,7 +12,7 @@ templ Index(act string) {
             <title>Recipouir</title>
             <meta charset="UTF-8"></meta>
             <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
-            <link href="/templates/topnav.css" rel="stylesheet"></link>
+            <link rel="stylesheet" href="/styles/main.css"></link>
         </head>   
         <body> 
             @Navbar(routes, act)
@@ -21,7 +21,6 @@ templ Index(act string) {
 }
 
 templ Navbar(pages map[string]templ.SafeURL, active string) {
-    <style> </style>
     <div class="topnav">
     for name, page := range pages {
         <a class={templ.KV("active", name == active)} href={page}>{ name }</a>
