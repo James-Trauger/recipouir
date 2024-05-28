@@ -1,35 +1,9 @@
 package templates
 
-var routes = map[string]templ.SafeURL{
-		"home":       templ.SafeURL("/home"),
-		"my recipes": templ.SafeURL("/my-recipes"),
-	}
-
-templ Index(act string) {
-    <!DOCTYPE html>
-    <html lang="en">
-        <head> 
-            <title>Recipouir</title>
-            <meta charset="UTF-8"></meta>
-            <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
-            <link rel="stylesheet" href="/styles/main.css"></link>
-        </head>   
-        <body> 
-            @Navbar(routes, act)
-        </body>
-    </html>
-}
-
-templ Navbar(pages map[string]templ.SafeURL, active string) {
-    <div class="topnav">
-    for name, page := range pages {
-        <a class={templ.KV("active", name == active)} href={page}>{ name }</a>
-        <!--
-        if name == active {
-            <a class="active" href={page}>{ name }</a>
-        } else {
-            <a href={page}>{ name }</a>
-        }-->
+templ Navbar(n Nav) {
+    <div class={"topnav"}>
+    for name, page := range n.pages {
+        <a class={"active", templ.KV("active", name == n.active)} href={page}>{ name }</a>
     }
     </div>
 }

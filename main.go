@@ -4,8 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/James-Trauger/Recipouir/templates"
+	"github.com/James-Trauger/Recipouir/utils"
+	"github.com/a-h/templ"
 )
 
 var (
@@ -16,22 +19,37 @@ var (
 
 func main() {
 	flag.Parse()
-	/*var routes map[string]templ.SafeURL = map[string]templ.SafeURL{
-		"home":       templ.SafeURL("/home"),
-		"my recipes": templ.SafeURL("/my-recipes"),
-	}*/
+	var routes map[string]templ.SafeURL = map[string]templ.SafeURL{
+		"home":       templ.SafeURL("/"),
+		"my recipes": templ.SafeURL("/myrecipes"),
+	}
+	var styles string = "./styles"
 	mux := http.NewServeMux()
 
-	comp := templates.Index("home")
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		comp.Render(r.Context(), w)
+	// css stylesheet handler
+	mux.Handle("/styles/", http.StripPrefix("/styles", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer utils.DrainClose(r.Body)
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("content-type", "text/css")
+		// write the file
+		http.ServeFile(w, r, filepath.Join(styles, r.URL.Path))
+	})))
+
+	// root handler
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		templates.Page(templates.NewNav(routes, "home"),
+			[]string{"/styles/topnav.css"}, templates.Welcome()).Render(r.Context(), w)
 	})
 
-	mux.HandleFunc("/", handler)
-	mux.HandleFunc("/styles/main.css", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./templates/topnav.css")
+	// my recipes handler
+	mux.HandleFunc("/myrecipes", func(w http.ResponseWriter, r *http.Request) {
+		templates.Page(templates.NewNav(routes, "my recipes"),
+			[]string{"/styles/topnav.css"}, templates.Recipe()).Render(r.Context(), w)
 	})
-	//cs := templ.NewCSSHandler()
-	//http.Handle("/", templ.Handler(handler))
 	fmt.Println(http.ListenAndServeTLS(*addr, *cert, *pkey, mux))
+}
+
+func DrainAndClose(next http.Handler) {
+
 }

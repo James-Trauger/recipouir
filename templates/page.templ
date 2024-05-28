@@ -1,19 +1,23 @@
 package templates 
 
 
-templ Page(active string, styles []string) {
+templ Page(nav Nav, styles []string, comps ...templ.Component) {
     <!DOCTYPE html>
     <html lang="en">
         <head> 
             <title>Recipouir</title>
             <meta charset="UTF-8"></meta>
             <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
-            for cs := range styles {
-                <link rel="stylesheet" href={cs}></link>
+            <!--<link rel="stylesheet" type="text/css" href="/styles/templ.css">-->
+            for _, cs := range styles {
+                <link rel="stylesheet" href={cs}>
             }  
         </head>   
         <body> 
-            @Navbar(routes, active)
+            @Navbar(nav)
+            for _, c := range comps {
+                @c
+            }
         </body>
     </html>
 }
