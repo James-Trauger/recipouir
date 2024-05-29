@@ -45,7 +45,7 @@ func main() {
 	// my recipes handler
 	mux.HandleFunc("/myrecipes", func(w http.ResponseWriter, r *http.Request) {
 		templates.Page(templates.NewNav(routes, "my recipes"),
-			[]string{"/styles/topnav.css"}, templates.Recipe()).Render(r.Context(), w)
+			[]string{"/styles/topnav.css"}, templates.RecipePage()).Render(r.Context(), w)
 	})
 	fmt.Println(http.ListenAndServeTLS(*addr, *cert, *pkey, mux))
 }

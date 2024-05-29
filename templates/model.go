@@ -17,3 +17,9 @@ func NewNav(pg map[string]templ.SafeURL, act string) Nav {
 		pages:  pg,
 	}
 }
+
+type Recipe struct {
+	name     string
+	preptime float32
+	steps    []string
+}
