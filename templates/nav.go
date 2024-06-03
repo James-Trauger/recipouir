@@ -1,6 +1,8 @@
 package templates
 
-import "github.com/a-h/templ"
+import (
+	"github.com/a-h/templ"
+)
 
 type Nav struct {
 	active string
@@ -16,10 +18,4 @@ func NewNav(pg map[string]templ.SafeURL, act string) Nav {
 		active: act,
 		pages:  pg,
 	}
-}
-
-type Recipe struct {
-	name     string
-	preptime float32
-	steps    []string
 }
