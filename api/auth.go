@@ -1,5 +1,11 @@
 package main
 
-func MatchTypeToUid(userId string, userType string) error {
+import "github.com/James-Trauger/Recipouir/model"
+
+func InsertUser(u model.User) error {
 	return nil
+}
+
+func ValidPassword(pass *[]byte) bool {
+	return false
 }

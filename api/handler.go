@@ -22,6 +22,6 @@ func rootHandler() http.Handler {
 
 func JSONError(w http.ResponseWriter, code int, err error) (int, error) {
 	w.Header().Set("content-type", "application/json")
-	body := []byte(fmt.Sprintf("{error:%s}", err))
+	body := []byte(fmt.Sprintf("{\"error\":%s}", err))
 	return w.Write(body)
 }

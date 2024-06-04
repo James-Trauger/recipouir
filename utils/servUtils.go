@@ -28,18 +28,31 @@ func (h Methods) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// method is not supported, key doesn't exist in the map
-	w.Header().Add("Allow", h.allowedMethods())
+	w.Header().Add("Allow", AllowedMethods(h))
 	if r.Method != http.MethodOptions {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
+/*
 func (h Methods) allowedMethods() string {
 	// element for each key
 	a := make([]string, 0, len(h))
 
 	// add all the methods
 	for k := range h {
+		a = append(a, k)
+	}
+	sort.Strings(a)
+	return strings.Join(a, ", ")
+}*/
+
+func AllowedMethods(meth map[string]http.Handler) string {
+	// element for each key
+	a := make([]string, 0, len(meth))
+
+	// add all the methods
+	for k := range meth {
 		a = append(a, k)
 	}
 	sort.Strings(a)
