@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/James-Trauger/Recipouir/utils"
@@ -17,4 +18,10 @@ func rootHandler() http.Handler {
 			_, _ = w.Write([]byte("test"))
 		}),
 	}
+}
+
+func JSONError(w http.ResponseWriter, code int, err error) (int, error) {
+	w.Header().Set("content-type", "application/json")
+	body := []byte(fmt.Sprintf("{error:%s}", err))
+	return w.Write(body)
 }
