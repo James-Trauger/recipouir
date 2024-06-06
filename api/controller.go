@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/James-Trauger/Recipouir/model"
+	"github.com/James-Trauger/Recipouir/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -65,9 +68,23 @@ func Login() http.Handler {
 
 			// valid credentials
 			if isAuthenticated {
-				// return a jwt token
-
+				// return a jwt token using RSA, expires a day from now
+				token := jwt.NewWithClaims(&utils.SignMethod,
+					jwt.RegisteredClaims{
+						Subject:   *login.Uname,
+						ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+					})
+				signed, err := token.SignedString(utils.PrivateKey)
+				if err != nil {
+					JSONError(w, http.StatusInternalServerError, errors.New("couldn't sign token"))
+					return
+				}
+				// add the token to the header
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("content-type", "application/jwt")
+				fmt.Fprintln(w, signed)
 			} else {
+				// incorrect credentials
 				JSONError(w, http.StatusUnauthorized, authError)
 			}
 		}),

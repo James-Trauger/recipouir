@@ -34,19 +34,6 @@ func (h Methods) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*
-func (h Methods) allowedMethods() string {
-	// element for each key
-	a := make([]string, 0, len(h))
-
-	// add all the methods
-	for k := range h {
-		a = append(a, k)
-	}
-	sort.Strings(a)
-	return strings.Join(a, ", ")
-}*/
-
 func AllowedMethods(meth map[string]http.Handler) string {
 	// element for each key
 	a := make([]string, 0, len(meth))
