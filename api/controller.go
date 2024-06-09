@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/James-Trauger/Recipouir/model"
 	"github.com/James-Trauger/Recipouir/utils"
-	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -19,28 +19,18 @@ import (
 // open the user collection from the db database
 var userCollection *mongo.Collection = OpenCollection(Client, "db", "user")
 
-func HashPassword() {
-
-}
-
-func VerifyPassword()
-
 // uType == "email" OR uType == "username"
-func withUname(name string, uType string, pass string) (bool, error) {
-	if uType != "email" && uType != "username" {
-		return false, errors.New("invalid credential type, must be email or username")
-	}
+func withUsername(name, pass string) error {
 
-	filter := bson.D{{"\"" + uType + "\"", "\"" + name + "\""}}
-	result := OpenCollection(Client, "db", "user").FindOne(context.Background(), filter)
+	filter := bson.M{`"username"`: "\"" + name + "\""}
+	result := userCollection.FindOne(context.Background(), filter)
 	var user model.User
 	err := result.Decode(&user)
 	if err != nil {
 		// internal server error
-		return false, errors.New("internal server error")
+		return errors.New("internal server error")
 	}
-	err = bcrypt.CompareHashAndPassword(*user.Pass, []byte(pass))
-	return err == nil, err
+	return bcrypt.CompareHashAndPassword(*user.Pass, []byte(pass))
 }
 
 func Signup()
@@ -54,30 +44,14 @@ func Login() http.Handler {
 			r.Body.Read(buf)
 			json.Unmarshal(buf, &login)
 
-			var isAuthenticated bool
-			var authError error
-			// username provided
-			if login.Uname != nil && login.Email == nil {
-				isAuthenticated, authError = withUname(*login.Uname, "username", *login.Pass)
-			}
-
-			// email provided
-			if login.Email != nil && login.Uname == nil {
-				isAuthenticated, authError = withUname(*login.Uname, "email", *login.Pass)
-			}
+			authenticated := withUsername(*login.Uname, *login.Pass)
 
 			// valid credentials
-			if isAuthenticated {
+			if authenticated != nil {
 				// return a jwt token using RSA, expires a day from now
-				token := jwt.NewWithClaims(&utils.SignMethod,
-					jwt.RegisteredClaims{
-						Subject:   *login.Uname,
-						ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-					})
-				signed, err := token.SignedString(utils.PrivateKey)
+				signed, err := utils.NewToken(*login.Uname)
 				if err != nil {
-					JSONError(w, http.StatusInternalServerError, errors.New("couldn't sign token"))
-					return
+					JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
 				}
 				// add the token to the header
 				w.WriteHeader(http.StatusOK)
@@ -85,19 +59,38 @@ func Login() http.Handler {
 				fmt.Fprintln(w, signed)
 			} else {
 				// incorrect credentials
-				JSONError(w, http.StatusUnauthorized, authError)
+				JSONError(w, http.StatusUnauthorized, authenticated)
 			}
 		}),
 	}
 }
 
-func GetUsers()
+/* retrieves the target user, they must already be authorized */
+func GetUser(target string) *model.User {
+	if userCollection == nil {
+		return nil
+	}
+	// give the query a 10 second time limit
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	filer := bson.M{"username": url.QueryEscape(target)}
+	query := userCollection.FindOne(ctx, filer)
+
+	var user model.User
+	query.Decode(&user)
+
+	if user.Username != target {
+		return nil
+	}
+
+	return &user
+}
 
 /*
 	/api/user?userid=...&userType=...
 
 only called after the user is authenticated
-*/
+*
 func GetUser() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
@@ -118,4 +111,4 @@ func GetUser() http.Handler {
 			JSONError(w, http.StatusInternalServerError, errors.New("user not found"))
 		}
 	})
-}
+}*/

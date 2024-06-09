@@ -3,10 +3,8 @@ package main
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/James-Trauger/Recipouir/utils"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type RestMethods map[string]http.Handler
@@ -35,7 +33,7 @@ func (rm RestMethods) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// authentication
+/* authentication
 func AuthenticateToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// extract token
@@ -45,9 +43,9 @@ func AuthenticateToken(next http.Handler) http.Handler {
 			JSONError(w, http.StatusBadRequest, errors.New("malformed authorization header, expected \"authorization: Bearer [token]\""))
 			return // invalid header
 		}
-		token, err := jwt.ParseWithClaims(authHeader[1], jwt.RegisteredClaims{}, utils.VerifyToken)
+		token, err := jwt.ParseWithClaims(authHeader[1], &UserClaims{}, utils.VerifyToken)
 		if err != nil {
-			JSONError(w, http.StatusInternalServerError, errors.New("couldn't parse tokene -> "+err.Error()))
+			JSONError(w, http.StatusInternalServerError, errors.New("couldn't parse token -> "+err.Error()))
 			return
 		}
 
@@ -58,3 +56,4 @@ func AuthenticateToken(next http.Handler) http.Handler {
 		}
 	})
 }
+*/

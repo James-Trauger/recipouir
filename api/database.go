@@ -11,8 +11,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var Client *mongo.Client
+
+func init() {
+	Client = DBinstance()
+}
+
 func DBinstance() *mongo.Client {
-	var err error = godotenv.Load(".env") // TODO either .env or the path to the .env
+	var err error = godotenv.Load("../.env") // TODO either .env or the path to the .env
 	if err != nil {
 		log.Fatal("Couldn't load .env file -> " + err.Error())
 	}
@@ -28,8 +34,6 @@ func DBinstance() *mongo.Client {
 	log.Println("MongoDB connected")
 	return client
 }
-
-var Client *mongo.Client = DBinstance()
 
 func OpenCollection(client *mongo.Client, db string, collectionName string) *mongo.Collection {
 	//var collection *mongo.Collection = client.Database(db).Collection(collectionName)

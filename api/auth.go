@@ -1,6 +1,8 @@
 package main
 
-import "github.com/James-Trauger/Recipouir/model"
+import (
+	"github.com/James-Trauger/Recipouir/model"
+)
 
 func InsertUser(u model.User) error {
 	return nil
