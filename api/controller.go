@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -19,11 +21,11 @@ import (
 // open the user collection from the db database
 var userCollection *mongo.Collection = OpenCollection(Client, "db", "user")
 
-// uType == "email" OR uType == "username"
+// returns nil on a successful login: username exists and the password was corrects
 func withUsername(name, pass string) error {
 
 	filter := bson.M{`"username"`: "\"" + name + "\""}
-	result := userCollection.FindOne(context.Background(), filter)
+	result := userCollection.FindOne(context.TODO(), filter)
 	var user model.User
 	err := result.Decode(&user)
 	if err != nil {
@@ -33,34 +35,71 @@ func withUsername(name, pass string) error {
 	return bcrypt.CompareHashAndPassword(*user.Pass, []byte(pass))
 }
 
-func Signup()
+func Signup(r *http.Request) (*model.Login, int, error) {
 
-func Login() http.Handler {
+	login, status, err := Login(r)
+
+	// user already exists
+	if !errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, status, err
+	}
+
+	// add the user to the database
+	user := model.NewUser(*login.Uname, *login.Pass)
+	_, err = userCollection.InsertOne(context.TODO(), user)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("couldn't insert new user into db")
+	}
+	return login, http.StatusOK, nil
+}
+
+func Login(r *http.Request) (*model.Login, int, error) {
+	// try logging the user in to see if they already have an account
+	var login model.Login
+	buf := bytes.NewBuffer(nil)
+	n, err := io.Copy(buf, r.Body)
+	if err != nil {
+		// body not read
+		return nil, http.StatusInternalServerError, err
+	} else if n == 0 {
+		// empty body
+		return nil, http.StatusBadRequest, errors.New("no request body provided")
+	}
+
+	// decode the json request
+	if err = json.Unmarshal(buf.Bytes(), &login); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	auth := withUsername(*login.Uname, *login.Pass)
+
+	if auth == nil {
+		return &login, http.StatusOK, nil
+	} else {
+		return nil, http.StatusUnauthorized, errors.New("incorrect username or password")
+	}
+}
+
+func HandleLogin() http.Handler {
 	return RestMethods{
 		http.MethodPost: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// retrieve the username and password
-			var login model.Login
-			var buf []byte
-			r.Body.Read(buf)
-			json.Unmarshal(buf, &login)
+			login, status, err := Login(r)
 
-			authenticated := withUsername(*login.Uname, *login.Pass)
+			if err != nil {
+				JSONError(w, status, err)
+				return
+			}
 
 			// valid credentials
-			if authenticated != nil {
-				// return a jwt token using RSA, expires a day from now
-				signed, err := utils.NewToken(*login.Uname)
-				if err != nil {
-					JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
-				}
-				// add the token to the header
-				w.WriteHeader(http.StatusOK)
-				w.Header().Set("content-type", "application/jwt")
-				fmt.Fprintln(w, signed)
-			} else {
-				// incorrect credentials
-				JSONError(w, http.StatusUnauthorized, authenticated)
+			// return a jwt token using RSA, expires a day from now
+			signed, err := utils.NewToken(*login.Uname)
+			if err != nil {
+				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
 			}
+			// add the token to the header
+			w.Header().Set("content-type", "application/jwt")
+			fmt.Fprintln(w, signed)
+
 		}),
 	}
 }
