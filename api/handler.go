@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/James-Trauger/Recipouir/utils"
 )
@@ -41,6 +43,33 @@ func userHandler() http.Handler {
 			if authErr != nil {
 				JSONError(w, http.StatusUnauthorized, authErr)
 			}
+		}),
+	}
+}
+
+func HandleLogin() http.Handler {
+	return RestMethods{
+		http.MethodPost: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			login, status, err := Login(r, ctx)
+
+			if err != nil {
+				JSONError(w, status, err)
+				return
+			}
+
+			// valid credentials
+			// return a jwt token using RSA, expires a day from now
+			signed, err := utils.NewToken(login.Uname)
+			if err != nil {
+				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
+			}
+			// add the token to the header
+			w.Header().Set("content-type", "application/jwt")
+			fmt.Fprintln(w, signed)
+
 		}),
 	}
 }

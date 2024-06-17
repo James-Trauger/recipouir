@@ -18,7 +18,7 @@ func TestDefaultHandle(t *testing.T) {
 	rootHandler().ServeHTTP(w, req)
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
-		log.Fatal(resp.StatusCode)
+		log.Fatal(resp.StatusCode) // GET
 	}
 	utils.DrainClose(resp.Body)
 

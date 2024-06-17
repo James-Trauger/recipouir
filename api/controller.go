@@ -5,15 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/James-Trauger/Recipouir/model"
-	"github.com/James-Trauger/Recipouir/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -22,22 +21,23 @@ import (
 var userCollection *mongo.Collection = OpenCollection(Client, "db", "user")
 
 // returns nil on a successful login: username exists and the password was corrects
-func withUsername(name, pass string) error {
+func withUsername(name, pass string, ctx context.Context) error {
 
 	filter := bson.M{`"username"`: "\"" + name + "\""}
-	result := userCollection.FindOne(context.TODO(), filter)
+	result := userCollection.FindOne(ctx, filter)
 	var user model.User
 	err := result.Decode(&user)
 	if err != nil {
-		// internal server error
-		return errors.New("internal server error")
+		// couldn't decod the user
+		//return errors.New("internal server error")
+		return err
 	}
 	return bcrypt.CompareHashAndPassword(*user.Pass, []byte(pass))
 }
 
-func Signup(r *http.Request) (*model.Login, int, error) {
+func Signup(r *http.Request, ctx context.Context) (*model.User, int, error) {
 
-	login, status, err := Login(r)
+	login, status, err := Login(r, ctx)
 
 	// user already exists
 	if !errors.Is(err, mongo.ErrNoDocuments) {
@@ -45,15 +45,17 @@ func Signup(r *http.Request) (*model.Login, int, error) {
 	}
 
 	// add the user to the database
-	user := model.NewUser(*login.Uname, *login.Pass)
-	_, err = userCollection.InsertOne(context.TODO(), user)
+	user := model.NewUser(login.Uname, login.Pass)
+	result, err := userCollection.InsertOne(ctx, user)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.New("couldn't insert new user into db")
+		//return nil, http.StatusInternalServerError, errors.New("couldn't insert new user into db")
+		return nil, http.StatusInternalServerError, err
 	}
-	return login, http.StatusOK, nil
+	user.ID = result.InsertedID.(primitive.ObjectID)
+	return user, http.StatusOK, nil
 }
 
-func Login(r *http.Request) (*model.Login, int, error) {
+func Login(r *http.Request, ctx context.Context) (*model.Login, int, error) {
 	// try logging the user in to see if they already have an account
 	var login model.Login
 	buf := bytes.NewBuffer(nil)
@@ -71,36 +73,13 @@ func Login(r *http.Request) (*model.Login, int, error) {
 		return nil, http.StatusBadRequest, err
 	}
 
-	auth := withUsername(*login.Uname, *login.Pass)
+	auth := withUsername(login.Uname, login.Pass, ctx)
 
 	if auth == nil {
 		return &login, http.StatusOK, nil
 	} else {
-		return nil, http.StatusUnauthorized, errors.New("incorrect username or password")
-	}
-}
-
-func HandleLogin() http.Handler {
-	return RestMethods{
-		http.MethodPost: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			login, status, err := Login(r)
-
-			if err != nil {
-				JSONError(w, status, err)
-				return
-			}
-
-			// valid credentials
-			// return a jwt token using RSA, expires a day from now
-			signed, err := utils.NewToken(*login.Uname)
-			if err != nil {
-				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
-			}
-			// add the token to the header
-			w.Header().Set("content-type", "application/jwt")
-			fmt.Fprintln(w, signed)
-
-		}),
+		//return nil, http.StatusUnauthorized, errors.New("incorrect username or password")
+		return &login, http.StatusUnauthorized, auth
 	}
 }
 
@@ -125,29 +104,16 @@ func GetUser(target string) *model.User {
 	return &user
 }
 
-/*
-	/api/user?userid=...&userType=...
+// returns nil on success
+func DeleteUser(target *model.User, ctx context.Context) error {
+	bs, err := bson.Marshal(target)
+	if err != nil {
+		return err
+	}
 
-only called after the user is authenticated
-*
-func GetUser() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
-		uid := query.Get("userid")
-		if uid == "" {
-			JSONError(w, http.StatusBadRequest, errors.New("no userid provided"))
-			return
-		}
-
-		//TODO authorize user
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var user model.User
-		err := userCollection.FindOne(ctx, bson.M{"userid": uid}).Decode(&user)
-		defer cancel()
-		if err != nil {
-			JSONError(w, http.StatusInternalServerError, errors.New("user not found"))
-		}
-	})
-}*/
+	result, err := userCollection.DeleteOne(ctx, bs)
+	if result.DeletedCount != 1 {
+		return errors.New("more than one user delete")
+	}
+	return err
+}
