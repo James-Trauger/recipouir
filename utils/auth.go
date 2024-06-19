@@ -99,7 +99,7 @@ func initKeys() (*rsa.PublicKey, *rsa.PrivateKey) {
 	}
 }
 
-// returns nil if the user specified in the claims can access the target resource
+/* returns nil if the user specified in the claims can access the target resource */
 func Authorize(head *http.Header, target string) error {
 	// extract token from header
 	rawToken, err := ParseTokenFromHeader(head)

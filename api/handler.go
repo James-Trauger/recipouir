@@ -53,7 +53,7 @@ func HandleLogin() http.Handler {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
-			login, status, err := Login(r, ctx)
+			user, status, err := Login(r, ctx)
 
 			if err != nil {
 				JSONError(w, status, err)
@@ -62,7 +62,7 @@ func HandleLogin() http.Handler {
 
 			// valid credentials
 			// return a jwt token using RSA, expires a day from now
-			signed, err := utils.NewToken(login.Uname)
+			signed, err := utils.NewToken(user.Username)
 			if err != nil {
 				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
 			}

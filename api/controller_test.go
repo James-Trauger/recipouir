@@ -1,4 +1,4 @@
-package main_test
+package main
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	recapi "github.com/James-Trauger/Recipouir/api"
+	//recapi "github.com/James-Trauger/Recipouir/api"
 	"github.com/James-Trauger/Recipouir/model"
 )
 
@@ -19,13 +19,14 @@ func validLoginResponse(expected model.Login, actual model.User, expErr, actualE
 }
 
 func TestSignup(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	// create a new request with a raw string of a login
 	req := httptest.NewRequest(http.MethodPost, "/api/signup",
 		strings.NewReader(`{"uname":"james","pass":"hello"}`))
-	loginResponse, status, err := recapi.Signup(req, ctx)
+	loginResponse, status, err := Signup(req, ctx)
 
 	if loginResponse == nil || !validLoginResponse(model.Login{Uname: "james", Pass: "hello"}, *loginResponse,
 		nil, err, http.StatusOK, status) {
@@ -33,7 +34,7 @@ func TestSignup(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		// delete the added user
-		err = recapi.DeleteUser(loginResponse, ctx)
+		err = DeleteUser(loginResponse, ctx)
 		if err != nil {
 			t.Log("couldn't delete added user -> " + err.Error())
 		}
@@ -51,12 +52,12 @@ func TestSignup(t *testing.T) {
 	// create the request and pass it to the controller
 	req = httptest.NewRequest(http.MethodPost, "/api/signup", bytes.NewReader(loginJSON))
 
-	loginResponse, status, err = recapi.Signup(req, ctx)
+	loginResponse, status, err = Signup(req, ctx)
 	if loginResponse == nil || !validLoginResponse(login, *loginResponse, nil, err, http.StatusOK, status) {
 		t.Fatal(err)
 	} else {
 		// delete the added user
-		err = recapi.DeleteUser(loginResponse, ctx)
+		err = DeleteUser(loginResponse, ctx)
 		if err != nil {
 			t.Log("couldn't delete added user -> " + err.Error())
 		}

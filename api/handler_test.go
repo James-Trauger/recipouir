@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -40,6 +39,6 @@ func TestDefaultHandle(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		log.Fatal("options method not supported")
 	}
-	fmt.Println(resp.Header.Get("Allow"))
+	//fmt.Println(resp.Header.Get("Allow"))
 	utils.DrainClose(resp.Body)
 }
