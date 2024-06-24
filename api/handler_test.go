@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"log"
@@ -10,11 +10,11 @@ import (
 )
 
 func TestDefaultHandle(t *testing.T) {
-	serv := httptest.NewServer(rootHandler())
+	serv := httptest.NewServer(RootHandler())
 
 	req := httptest.NewRequest(http.MethodGet, serv.URL, nil)
 	w := httptest.NewRecorder()
-	rootHandler().ServeHTTP(w, req)
+	RootHandler().ServeHTTP(w, req)
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
 		log.Fatal(resp.StatusCode) // GET
@@ -24,7 +24,7 @@ func TestDefaultHandle(t *testing.T) {
 	// test method not found
 	req = httptest.NewRequest(http.MethodPut, serv.URL, nil)
 	w = httptest.NewRecorder()
-	rootHandler().ServeHTTP(w, req)
+	RootHandler().ServeHTTP(w, req)
 	resp = w.Result()
 	if resp.StatusCode != http.StatusMethodNotAllowed {
 		log.Fatal("incorrect response code for an unsupported method")
@@ -34,7 +34,7 @@ func TestDefaultHandle(t *testing.T) {
 	// test Options method
 	req = httptest.NewRequest(http.MethodOptions, serv.URL, nil)
 	w = httptest.NewRecorder()
-	rootHandler().ServeHTTP(w, req)
+	RootHandler().ServeHTTP(w, req)
 	resp = w.Result()
 	if resp.StatusCode != http.StatusOK {
 		log.Fatal("options method not supported")

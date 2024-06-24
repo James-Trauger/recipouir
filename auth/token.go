@@ -1,4 +1,4 @@
-package utils
+package reciauth
 
 import (
 	"errors"
@@ -60,6 +60,8 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
+// returns nil on success
+// validates the token's claim by verifying a username exists and the token is not expired
 func (uc UserClaims) Validate() error {
 	if uc.Username == "" {
 		return errors.New("empty username")
@@ -68,6 +70,7 @@ func (uc UserClaims) Validate() error {
 	if err != nil {
 		return err
 	}
+	// past the expiry date
 	if expires.Compare(time.Now()) < 0 {
 		return jwt.ErrTokenExpired
 	}
@@ -82,6 +85,7 @@ func NewToken(user string) (string, error) {
 		user,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			Issuer:    "Recipouir",
 		},
 	}
 	return t.SignedString(PrivateKey)
@@ -113,4 +117,17 @@ func ValidToken(rawToken string) (*UserClaims, error) {
 	}
 	claims := token.Claims.(*UserClaims)
 	return claims, claims.Validate()
+}
+
+/*
+authorizes a user given a raw token and a username
+*/
+func Authroize(token, user string) bool {
+	// validate the token and retrieve the claims
+	claims, err := ValidToken(token)
+	if err != nil {
+		return false
+	}
+	// username of the token must match the passed username
+	return claims.Username == user
 }

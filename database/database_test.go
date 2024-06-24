@@ -1,13 +1,17 @@
-package main
+package db_test
 
 import (
 	"context"
 	"testing"
 
-	//recapi "github.com/James-Trauger/Recipouir/api"
+	"github.com/James-Trauger/Recipouir/api"
+	db "github.com/James-Trauger/Recipouir/database"
 	"github.com/James-Trauger/Recipouir/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+var userCollection *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "user")
 
 func insertUser(uname, pass string) *model.User {
 	user := model.NewUser(uname, pass)
@@ -35,7 +39,7 @@ func TestFind(t *testing.T) {
 	}
 
 	// delete the user
-	if err := DeleteUser(&userAfterInsert, context.Background()); err != nil {
+	if err := api.DeleteUser(&userAfterInsert, context.Background()); err != nil {
 		t.Fatal("couldn't delete user: " + err.Error())
 	}
 }

@@ -1,8 +1,9 @@
-package main
+package reciauth
 
 import (
 	"context"
 
+	db "github.com/James-Trauger/Recipouir/database"
 	"github.com/James-Trauger/Recipouir/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -11,7 +12,7 @@ import (
 /* pass a user's login credentials and retrieve a User if it matches their info in the db */
 func Authenticate(login *model.Login, ctx context.Context) (*model.User, error) {
 	filter := bson.M{"_id": login.Uname}
-	result := OpenCollection(Client, DbName, "user").FindOne(ctx, filter)
+	result := db.OpenCollection(db.Client, db.DbName, "user").FindOne(ctx, filter)
 	if err := result.Err(); err != nil {
 		return nil, err
 	}

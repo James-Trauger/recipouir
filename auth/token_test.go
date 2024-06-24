@@ -1,4 +1,4 @@
-package utils_test
+package reciauth
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/James-Trauger/Recipouir/utils"
 )
 
 func TestValidToken(t *testing.T) {
@@ -19,7 +17,7 @@ func TestValidToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	// generate the token
-	tokenString, err := utils.NewToken(uname)
+	tokenString, err := NewToken(uname)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,17 +25,18 @@ func TestValidToken(t *testing.T) {
 	req.Header.Add("Authorization", "Bearer "+tokenString)
 
 	// parse the header
-	rawToken, err := utils.ParseTokenFromHeader(&req.Header)
+	rawToken, err := ParseTokenFromHeader(&req.Header)
 	if err != nil {
 		t.Fatal(err)
 	}
-	claims, err := utils.ValidToken(rawToken)
+	claims, err := ValidToken(rawToken)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Printf("claims: %v\n", claims)
 	dur := time.Until(claims.ExpiresAt.Time)
-	if claims.Username != "admin" && dur < (24*time.Hour) && dur > ((23*time.Hour)+(59*time.Minute)) {
+	if claims.Username != "admin" || (dur < (24*time.Hour) && dur > ((23*time.Hour)+(59*time.Minute))) ||
+		claims.Issuer != "Recipouir" {
 		t.Fatalf("invalid token, incorrect username or expiry date\nusername=%s\nexpires at %s\n", claims.Username, claims.ExpiresAt)
 	}
 }

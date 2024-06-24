@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	reciauth "github.com/James-Trauger/Recipouir/auth"
 	"github.com/James-Trauger/Recipouir/utils"
 )
 
@@ -15,7 +16,7 @@ const (
 	LoginRoute  = "user/login"
 )
 
-func rootHandler() http.Handler {
+func RootHandler() http.Handler {
 	return utils.Methods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write([]byte("test"))
@@ -39,7 +40,7 @@ func userHandler() http.Handler {
 				JSONError(w, http.StatusBadRequest, errors.New("no username query"))
 				return
 			}
-			authErr := utils.Authorize(&r.Header, username)
+			authErr := reciauth.Authorize(&r.Header, username)
 			if authErr != nil {
 				JSONError(w, http.StatusUnauthorized, authErr)
 			}
@@ -62,7 +63,7 @@ func HandleLogin() http.Handler {
 
 			// valid credentials
 			// return a jwt token using RSA, expires a day from now
-			signed, err := utils.NewToken(user.Username)
+			signed, err := reciauth.NewToken(user.Username)
 			if err != nil {
 				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
 			}
