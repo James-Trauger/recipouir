@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -61,5 +62,48 @@ func TestSignup(t *testing.T) {
 		if err != nil {
 			t.Log("couldn't delete added user -> " + err.Error())
 		}
+	}
+}
+
+func TestInsertGetRecipe(t *testing.T) {
+	// create a new recipe
+	user := "ned"
+	rec := model.NewRecipe("cookies", user, []model.Ingredient{model.NewIng("flour", 2, 1, "cup")},
+		[]string{"mix flour, sugar, and milk"})
+	// insert the recipe
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := InsertRecipe(*rec, user, ctx)
+
+	/* delete the inserted recipe
+	defer func(recipe, user string, ctx context.Context) {
+		// delete from db
+		err = DeleteRecipe(rec.Name, user, ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(rec.Name, user, ctx)
+	*/
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// retrieve the recipe
+	retreivedRecipe, err := GetRecipe(user, rec.Name, ctx)
+	if err != nil {
+		b, _ := rec.Ings[0].MarshalBSON()
+		fmt.Println(string(b))
+		t.Fatal(err)
+	}
+
+	buf, _ := json.Marshal(&rec)
+	fmt.Println(string(buf))
+	buf, _ = json.Marshal(retreivedRecipe)
+	fmt.Println(string(buf))
+
+	// copmare recipes
+	if !rec.Equal(retreivedRecipe) {
+		t.Fatalf("retrieved recipe is not the same as the inserted one\nInserted: %v\nRetreived: %v", rec, retreivedRecipe)
 	}
 }

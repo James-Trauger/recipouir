@@ -1,7 +1,12 @@
 package model
 
 import (
+	"errors"
+	"fmt"
 	"math/big"
+	"slices"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Ingredient struct {
@@ -11,20 +16,20 @@ type Ingredient struct {
 }
 
 /* returns an ingredient with a passeed Rational number as the amount */
-func NewIngredient(n string, amt *big.Rat, un string) Ingredient {
+func NewIngredient(name, unit string, amt *big.Rat) Ingredient {
 	return Ingredient{
-		Name:   n,
+		Name:   name,
 		Amount: amt,
-		Unit:   un,
+		Unit:   unit,
 	}
 }
 
 /* returns an ingredient with a numerator and denominator as the amount */
-func NewIng(n string, num int64, denom int64, un string) Ingredient {
+func NewIng(name string, num int64, denom int64, unit string) Ingredient {
 	return Ingredient{
-		Name:   n,
+		Name:   name,
 		Amount: big.NewRat(num, denom),
-		Unit:   un,
+		Unit:   unit,
 	}
 }
 
@@ -46,22 +51,45 @@ func EqualIngredients(i1, i2 []Ingredient) bool {
 	return true
 }
 
+func (i *Ingredient) MarshalBSON() ([]byte, error) {
+	document := bson.D{
+		{"name", i.Name},
+		{"amount", i.Amount},
+		{"unit", i.Unit},
+	}
+	if i.Amount == nil || i.Name == "" || i.Unit == "" {
+		return nil, errors.New("invalid ingredient")
+	}
+	if i.Amount.Denom().Cmp(big.NewInt(1)) == 0 {
+		return []byte(fmt.Sprintf("{ name: '%s', amount: %s, unit: '%s' }", i.Name, i.Amount.Num(), i.Unit)), nil
+	} else {
+		return []byte(fmt.Sprintf("{ name: '%s', amount: %s, unit: '%s' }", i.Name, i.Amount, i.Unit)), nil
+	}
+}
+
 type Recipe struct {
-	Name  string       `json:"name"`
-	Ings  []Ingredient `json:"ingredients"`
-	Steps []string     `json:"steps"`
+	Name      string       `json:"name"`
+	Ings      []Ingredient `json:"ingredients"`
+	Steps     []string     `json:"steps"`
+	CreatedBy string       `json:"username"`
 }
 
 /*
 creates a new recipe based on the name, ingredients, and steps.
 pass nil to the ingredients and sps argument if you want to add them yourself
 */
-func NewRecipe(n string, ingredients []Ingredient, sps []string) *Recipe {
+func NewRecipe(name, creator string, ingredients []Ingredient, steps []string) *Recipe {
 	return &Recipe{
-		Name:  n,
-		Ings:  ingredients,
-		Steps: sps,
+		Name:      name,
+		Ings:      ingredients,
+		Steps:     steps,
+		CreatedBy: creator,
 	}
+}
+
+func (r *Recipe) Equal(r2 *Recipe) bool {
+	return r.Name == r2.Name && EqualIngredients(r.Ings, r2.Ings) &&
+		slices.Equal(r.Steps, r2.Steps) && r.CreatedBy == r2.CreatedBy
 }
 
 func (r *Recipe) AddIngredient(i ...Ingredient) {

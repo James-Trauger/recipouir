@@ -102,7 +102,7 @@ func GetRecipe(user, name string, ctx context.Context) (*model.Recipe, error) {
 	//TODO validate token
 
 	// filter based on the name of a recipe the specified user created
-	filter := bson.M{"user": user, "name": name}
+	filter := bson.M{"name": name, "createdby": user}
 	var recipe model.Recipe
 	result := recipeCollection.FindOne(context.TODO(), filter)
 	err := result.Decode(&recipe)
@@ -123,5 +123,12 @@ func InsertRecipe(rec model.Recipe, user string, ctx context.Context) error {
 func InsertManyRecipe(recipes *[]model.Recipe, user string, ctx context.Context) error {
 	cast := []any{*recipes} // TODO test this, prolly wont work
 	_, err := recipeCollection.InsertMany(ctx, cast)
+	return err
+}
+
+// delete a recipe from the database based on its name and user who created it
+func DeleteRecipe(name, user string, ctx context.Context) error {
+	filter := bson.M{"name": name, "createdby": user}
+	_, err := recipeCollection.DeleteOne(ctx, filter)
 	return err
 }
