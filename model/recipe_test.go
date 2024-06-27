@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var ings = []Ingredient{
@@ -16,9 +18,9 @@ var ings = []Ingredient{
 }
 
 var ingsJson = []string{
-	`{"name":"flour","amount":"1/2","unit":"cup"}`,
-	`{"name":"vanilla","amount":"5","unit":"gram"}`,
-	`{"name":"chocolate","amount":"2","unit":"oz"}`,
+	`{"Name":"flour","Amount":"1/2","Unit":"cup"}`,
+	`{"Name":"vanilla","Amount":"5","Unit":"gram"}`,
+	`{"Name":"chocolate","Amount":"2","Unit":"oz"}`,
 }
 
 var steps = []string{
@@ -53,15 +55,19 @@ func TestIngUnmarshal(t *testing.T) {
 		}
 
 		var marshIng Ingredient
+
 		// unmarshall
-		json.Unmarshal(jsonBytes, &marshIng)
+		err = json.Unmarshal(jsonBytes, &marshIng)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		// the fields need to exactly match
 		if ingredient.Name != marshIng.Name {
 			t.Fatalf("name of unmarshalled ingredient is incorrect\nExpected: %s\nReceived: %s",
 				ingredient.Name, marshIng.Name)
 		}
-		if ingredient.Amount.Cmp(marshIng.Amount) != 0 {
+		if ingredient.Amount.Cmp(&marshIng.Amount.Rat) != 0 {
 			t.Fatalf("amount of unmarshalled ingredient is incorrect\nExpected: %s\nReceived: %s",
 				ingredient.Amount, marshIng.Amount)
 		}
@@ -74,7 +80,7 @@ func TestIngUnmarshal(t *testing.T) {
 
 func TestRecipeMarshal(t *testing.T) {
 	recipe := NewRecipe("mine", "ned", ings, steps)
-	raw, _ := json.RawMessage(fmt.Sprintf("{\"name\":\"mine\",\"ingredients\":[%s],\"steps\":[\"mix the flour\",\"add the vanilla\"],\"username\":\"ned\"}", strings.Join(ingsJson, ","))).MarshalJSON()
+	raw, _ := json.RawMessage(fmt.Sprintf("{\"Name\":\"mine\",\"Ingredients\":[%s],\"Steps\":[\"mix the flour\",\"add the vanilla\"],\"CreatedBy\":\"ned\"}", strings.Join(ingsJson, ","))).MarshalJSON()
 	//raw, _ := json.RawMessage(`{"name":"mine","ingredients":[{"name":"flour","amount":"1/2","unit":"cup"},{"name":"vanilla","amount":"5","unit":"gram"}],"steps":["mix the flour","add the vanilla"],"username":"ned"}`).MarshalJSON()
 
 	jsonBytes, err := json.Marshal(recipe)
@@ -108,8 +114,8 @@ func TestRecipeUnmarshal(t *testing.T) {
 	}
 
 	// compare ingredients
-	if !EqualIngredients(recipe.Ings, unmarshRecipe.Ings) {
-		t.Fatalf("ingredients of recipes unmarshalled incorrectly\nExpected: %s\nReceived: %s\n", recipe.Ings, unmarshRecipe.Ings)
+	if !EqualIngredients(recipe.Ingredients, unmarshRecipe.Ingredients) {
+		t.Fatalf("ingredients of recipes unmarshalled incorrectly\nExpected: %s\nReceived: %s\n", recipe.Ingredients, unmarshRecipe.Ingredients)
 	}
 
 	//compare steps
@@ -119,5 +125,25 @@ func TestRecipeUnmarshal(t *testing.T) {
 
 	if recipe.CreatedBy != unmarshRecipe.CreatedBy {
 		t.Fatalf("name of recipe creator unmarshalled incorrectly\nExpected: %s\nReceived: %s\n", recipe.CreatedBy, unmarshRecipe.CreatedBy)
+	}
+}
+
+func TestIngredientBSON(t *testing.T) {
+	for _, ing := range ings {
+		// encode to bson
+		bs, err := bson.Marshal(&ing)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// decode back to original type
+		var unmarshalledIng Ingredient
+		if err = bson.Unmarshal(bs, &unmarshalledIng); err != nil {
+			t.Fatal(err)
+		}
+		// compare to original value
+		if !ing.Equal(&unmarshalledIng) {
+			t.Fatalf("ingredient unmarshalled bson incorrectly\nExpected:%v\nReceived:%v", ing, unmarshalledIng)
+		}
 	}
 }
