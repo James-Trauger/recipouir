@@ -13,6 +13,7 @@ import (
 
 	//recapi "github.com/James-Trauger/Recipouir/api"
 	"github.com/James-Trauger/Recipouir/model"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func validLoginResponse(expected model.Login, actual model.User, expErr, actualErr error, expStatus, actualStatus int) bool {
@@ -92,7 +93,7 @@ func TestInsertGetRecipe(t *testing.T) {
 	// retrieve the recipe
 	retreivedRecipe, err := GetRecipe(user, rec.Name, ctx)
 	if err != nil {
-		b, _ := rec.Ings[0].MarshalBSON()
+		b, err := bson.Marshal(retreivedRecipe)
 		fmt.Println(string(b))
 		t.Fatal(err)
 	}
