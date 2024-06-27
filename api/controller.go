@@ -18,19 +18,19 @@ var (
 	recipeCollection *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "recipe")
 )
 
-func Signup(r *http.Request, ctx context.Context) (*model.User, int, error) {
+func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 
-	login, err := model.ExtractLogin(r.Body)
+	/*login, err := model.ExtractLogin(r.Body)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
-	}
+	}*/
 
 	// should return an error because the user doesn't exist yet
-	_, err = reciauth.Authenticate(login, ctx)
+	_, err := reciauth.Authenticate(login, ctx)
 
 	// user already exists
 	if !errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, http.StatusUnauthorized, err
+		return nil, err
 	}
 
 	// add the user to the database
@@ -38,11 +38,11 @@ func Signup(r *http.Request, ctx context.Context) (*model.User, int, error) {
 	result, err := userCollection.InsertOne(ctx, user)
 	if err != nil {
 		//return nil, http.StatusInternalServerError, errors.New("couldn't insert new user into db")
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 	//user.ID = result.InsertedID.(primitive.ObjectID)
 	user.ID = result.InsertedID.(string)
-	return user, http.StatusOK, nil
+	return user, nil
 }
 
 func Login(r *http.Request, ctx context.Context) (*model.User, int, error) {

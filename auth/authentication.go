@@ -33,6 +33,7 @@ func Authenticate(login *model.Login, ctx context.Context) (*model.User, error) 
 	}
 }
 
+// TODO password requirements
 func ValidPassword(pass *[]byte) bool {
 	return false
 }
