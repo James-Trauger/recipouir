@@ -147,3 +147,21 @@ func TestIngredientBSON(t *testing.T) {
 		}
 	}
 }
+
+func TestRecipeBSON(t *testing.T) {
+	recipe := NewRecipe("mine", "ned", ings, steps)
+
+	bsonBytes, err := bson.Marshal(&recipe)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var unmarshalledRecipe Recipe
+	if err = bson.Unmarshal(bsonBytes, &unmarshalledRecipe); err != nil {
+		t.Fatal(err)
+	}
+
+	if !recipe.Equal(&unmarshalledRecipe) {
+		t.Fatalf("unmarshalled recipe does not match original recipe\nExpected: %v\nReceived: %v\n", recipe, unmarshalledRecipe)
+	}
+}
