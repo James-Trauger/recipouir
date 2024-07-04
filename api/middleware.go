@@ -2,8 +2,11 @@ package api
 
 import (
 	"errors"
+	"io"
 	"net/http"
 
+	reciauth "github.com/James-Trauger/Recipouir/auth"
+	"github.com/James-Trauger/Recipouir/model"
 	"github.com/James-Trauger/Recipouir/utils"
 )
 
@@ -33,27 +36,37 @@ func (rm RestMethods) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/* authentication
-func AuthenticateToken(next http.Handler) http.Handler {
+// drain and close the request so the tcp session can be reused
+func drainAndClose(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// extract token
-		authHeader := strings.Split(r.Header.Get("Authorization"), " ")
-		// tokens are in the form of `Bearer 0x...`
-		if len(authHeader) != 2 || authHeader[0] != "Bearer" {
-			JSONError(w, http.StatusBadRequest, errors.New("malformed authorization header, expected \"authorization: Bearer [token]\""))
-			return // invalid header
-		}
-		token, err := jwt.ParseWithClaims(authHeader[1], &UserClaims{}, utils.VerifyToken)
+		next.ServeHTTP(w, r)
+		io.Copy(io.Discard, r.Body)
+		r.Body.Close()
+	})
+}
+
+func authenticateLogin(next http.Handler, tokenUser string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		model.ExtractLogin(r.Body)
+	})
+}
+
+func validateToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// extract the token from the request
+		token, err := reciauth.ParseTokenFromHeader(&r.Header)
+		// invalid token
 		if err != nil {
-			JSONError(w, http.StatusInternalServerError, errors.New("couldn't parse token -> "+err.Error()))
+			JSONError(w, http.StatusBadRequest, errors.New("couldn't parse token"))
 			return
 		}
 
-		if token.Valid {
-			next.ServeHTTP(w, r)
-		} else {
-			JSONError(w, http.StatusBadRequest, errors.New("couldn't validate/verify token"))
+		// claims of the token
+		claims, err := reciauth.ValidToken(token)
+		if err != nil {
+			JSONError(w, http.StatusBadRequest, errors.New("invalid token"))
+			return
 		}
+		authenticateLogin(next, claims.Username)
 	})
 }
-*/
