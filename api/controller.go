@@ -46,6 +46,7 @@ func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 }
 
 func Login(r *http.Request, ctx context.Context) (*model.User, int, error) {
+
 	// retrieve username and password from the request
 	login, err := model.ExtractLogin(r.Body)
 	if err != nil {
@@ -61,6 +62,21 @@ func Login(r *http.Request, ctx context.Context) (*model.User, int, error) {
 		return nil, http.StatusUnauthorized, isAuthenticated
 	}
 }
+
+/*
+func Login(login *model.Login, ctx context.Context) (*model.User, error) {
+	// retrieve the username from the jwt token
+	tokenUname := ctx.Value(userKey)
+	tokenUname, ok := tokenUname.(string)
+	// cast username to string
+	if !ok {
+		// username from the token is not a string
+		return nil, errors.New("inavlid username from jwt token")
+	}
+
+	// does the token match the
+
+}*/
 
 /* retrieves the target user *
 func GetUser(login model.Login) *model.User {

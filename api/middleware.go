@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -9,6 +10,10 @@ import (
 	"github.com/James-Trauger/Recipouir/model"
 	"github.com/James-Trauger/Recipouir/utils"
 )
+
+type tokenUnameKey int
+
+const userKey tokenUnameKey = 0
 
 type RestMethods map[string]http.Handler
 
@@ -67,6 +72,64 @@ func validateToken(next http.Handler) http.Handler {
 			JSONError(w, http.StatusBadRequest, errors.New("invalid token"))
 			return
 		}
-		authenticateLogin(next, claims.Username)
+
+		// context with the username of who own the token
+		userCtx := context.WithValue(r.Context(), userKey, claims.Username)
+		// add the context to the request
+		rUser := r.WithContext(userCtx)
+
+		next.ServeHTTP(w, rUser)
 	})
+}
+
+/* handles login requests
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	// retrieve the username from the jwt token
+	tokenUname := r.Context().Value(userKey)
+	tokenUname, ok := tokenUname.(string)
+	// cast username to string
+	if !ok {
+		// username from the token is not a string
+		JSONError(w, http.StatusBadRequest, errors.New("inavlid username from jwt token"))
+		return
+	}
+
+	// copy of the body for
+	body, err := r.GetBody()
+	if err != nil {
+		JSONError(w, http.StatusInternalServerError, errors.New("interal server error"))
+		return
+	}
+	// retrieve credentials from the request
+	reqLogin, err := model.ExtractLogin(body)
+	if err != nil {
+		//TODO bad request, invalid format
+		return
+	}
+
+	// authorize the user
+	if tokenUname != reqLogin.Uname {
+		JSONError(w, http.StatusUnauthorized, errors.New("can't login as that user with the token provided"))
+		return
+	}
+
+}*/
+
+func LoginNoTokenHandler(w http.ResponseWriter, r *http.Request) {
+	user, status, err := Login(r, r.Context())
+	if err != nil {
+		JSONError(w, status, err)
+		return
+	}
+
+	// generate a token
+	rawToken, err := reciauth.NewToken(user.Username)
+	if err != nil {
+		JSONError(w, http.StatusInternalServerError, errors.New("couldn't create new jwt token"))
+		return
+	}
+
+	// write the token to the response
+	w.WriteHeader(http.StatusAccepted)
+	w.Header().Set("Authorization", "Bearer "+rawToken)
 }
