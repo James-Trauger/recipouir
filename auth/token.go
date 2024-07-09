@@ -55,6 +55,10 @@ func (sm *RSA2048SigningMethod) Verify(signingString string, sig []byte, key any
 	return rsa.VerifyPKCS1v15(rsaKey, sm.Hash, hasher.Sum(nil), sig)
 }*/
 
+var (
+	ErrTokenMissing = errors.New("no token was found in the authorization header, attach the token or login to receive a new one")
+)
+
 type UserClaims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
@@ -95,14 +99,20 @@ func VerifyToken(t *jwt.Token) (any, error) { return PublicKey, nil }
 
 // returns the token from an http header (does NOT validate the token)
 func ParseTokenFromHeader(head *http.Header) (string, error) {
-	// token is in the Authorizaiton header
-	authHeader := strings.Split(head.Get("Authorization"), " ")
-	// header is in the form `Bearer [token]`
-	if len(authHeader) != 2 || authHeader[0] != "Bearer" {
-		return "", errors.New("malformed authorization header, expected \"Authorization: Bearer [token]\"") // invalid header
+	authHeader := head.Get("Authorization")
+	if authHeader == "" {
+		return "", ErrTokenMissing
 	}
 
-	return authHeader[1], nil
+	// token is in the Authorizaiton header
+	bearer := strings.Split(head.Get("Authorization"), " ")
+
+	// header is in the form `Bearer [token]`
+	if len(bearer) != 2 || bearer[0] != "Bearer" {
+		return "", jwt.ErrTokenMalformed // invalid header
+	}
+
+	return bearer[1], nil
 }
 
 /*

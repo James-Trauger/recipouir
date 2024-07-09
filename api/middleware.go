@@ -60,9 +60,10 @@ func validateToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// extract the token from the request
 		token, err := reciauth.ParseTokenFromHeader(&r.Header)
+
 		// invalid token
 		if err != nil {
-			JSONError(w, http.StatusBadRequest, errors.New("couldn't parse token"))
+			JSONError(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -73,12 +74,12 @@ func validateToken(next http.Handler) http.Handler {
 			return
 		}
 
-		// context with the username of who own the token
+		// context with the username of who owns the token
 		userCtx := context.WithValue(r.Context(), userKey, claims.Username)
 		// add the context to the request
-		rUser := r.WithContext(userCtx)
+		r = r.WithContext(userCtx)
 
-		next.ServeHTTP(w, rUser)
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -114,22 +115,3 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }*/
-
-func LoginNoTokenHandler(w http.ResponseWriter, r *http.Request) {
-	user, status, err := Login(r, r.Context())
-	if err != nil {
-		JSONError(w, status, err)
-		return
-	}
-
-	// generate a token
-	rawToken, err := reciauth.NewToken(user.Username)
-	if err != nil {
-		JSONError(w, http.StatusInternalServerError, errors.New("couldn't create new jwt token"))
-		return
-	}
-
-	// write the token to the response
-	w.WriteHeader(http.StatusAccepted)
-	w.Header().Set("Authorization", "Bearer "+rawToken)
-}

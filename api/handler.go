@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	reciauth "github.com/James-Trauger/Recipouir/auth"
+	"github.com/James-Trauger/Recipouir/model"
 	"github.com/James-Trauger/Recipouir/utils"
 )
 
@@ -72,5 +74,40 @@ func HandleLogin() http.Handler {
 			fmt.Fprintln(w, signed)
 
 		}),
+	}
+}
+
+func AddRecipeHandler() http.Handler {
+	return RestMethods{
+		http.MethodPost: validateToken(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// extract the recipe
+			var recipe model.Recipe
+			err := json.NewDecoder(r.Body).Decode(&recipe)
+			if err != nil {
+				JSONError(w, http.StatusBadRequest, errors.New("couldn't decode the recipe"))
+				return
+			}
+
+			// get the username from the token
+			userToken := r.Context().Value(userKey)
+			if userToken == nil {
+				JSONError(w, http.StatusInternalServerError, errors.New("couldn't find user associated with the token"))
+				return
+			}
+
+			// token must match the user adding the recipe
+			if userToken != recipe.CreatedBy {
+				JSONError(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+				return
+			}
+
+			// give the database 5 seconds to insert the recipe
+			ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+			defer cancel()
+			// add the recipe
+			if err = InsertRecipe(recipe, recipe.CreatedBy, ctx); err != nil {
+				JSONError(w, http.StatusInternalServerError, err)
+			}
+		})),
 	}
 }
