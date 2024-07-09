@@ -14,8 +14,10 @@ import (
 
 // open the user collection from the db database
 var (
-	userCollection   *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "user")
-	recipeCollection *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "recipe")
+	userCollection      *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "user")
+	recipeCollection    *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "recipe")
+	ErrUserAlreadyExits                   = errors.New("user already exists")
+	ErrDbInsertionError                   = errors.New("couldn't insert the passed data")
 )
 
 func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
@@ -30,7 +32,7 @@ func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 
 	// user already exists
 	if !errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, err
+		return nil, ErrUserAlreadyExits
 	}
 
 	// add the user to the database
@@ -38,7 +40,7 @@ func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 	result, err := userCollection.InsertOne(ctx, user)
 	if err != nil {
 		//return nil, http.StatusInternalServerError, errors.New("couldn't insert new user into db")
-		return nil, err
+		return nil, ErrDbInsertionError
 	}
 	//user.ID = result.InsertedID.(primitive.ObjectID)
 	user.ID = result.InsertedID.(string)

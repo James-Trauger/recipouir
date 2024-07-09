@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -13,7 +14,10 @@ import (
 
 type tokenUnameKey int
 
-const userKey tokenUnameKey = 0
+const (
+	userKey tokenUnameKey = iota
+	loginKey
+)
 
 type RestMethods map[string]http.Handler
 
@@ -80,6 +84,20 @@ func validateToken(next http.Handler) http.Handler {
 		r = r.WithContext(userCtx)
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+// add the login object to request's context assuming it exists
+func loginExtractor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var login model.Login
+		// add a value to the request's context
+		if err := json.NewDecoder(r.Body).Decode(&login); err != nil {
+			next.ServeHTTP(w, r)
+		} else {
+			loginCtx := context.WithValue(r.Context(), loginKey, login)
+			next.ServeHTTP(w, r.WithContext(loginCtx))
+		}
 	})
 }
 

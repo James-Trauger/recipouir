@@ -53,7 +53,7 @@ func userHandler() http.Handler {
 func HandleLogin() http.Handler {
 	return RestMethods{
 		http.MethodPost: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 			defer cancel()
 
 			user, status, err := Login(r, ctx)
@@ -69,11 +69,44 @@ func HandleLogin() http.Handler {
 			if err != nil {
 				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
 			}
-			// add the token to the header
-			w.Header().Set("content-type", "application/jwt")
-			fmt.Fprintln(w, signed)
+			// add the token
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprintf(w, "{token: %s}", signed)
 
 		}),
+	}
+}
+
+func SignupHandler() http.Handler {
+	return RestMethods{
+		http.MethodPost: loginExtractor(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+
+			login, ok := ctx.Value(loginKey).(model.Login)
+			if !ok {
+				JSONError(w, http.StatusBadRequest, errors.New("no username or password provided"))
+				return
+			}
+
+			// add timeout to the context
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+
+			_, err := Signup(&login, ctx)
+			if err != nil {
+				var status int = http.StatusBadRequest
+				if errors.Is(err, ErrUserAlreadyExits) {
+					status = http.StatusUnprocessableEntity
+				} else {
+					status = http.StatusInternalServerError
+				}
+				JSONError(w, status, err)
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+			// successful signup message?
+		})),
 	}
 }
 
