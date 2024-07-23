@@ -144,3 +144,12 @@ func AddRecipeHandler() http.Handler {
 		})),
 	}
 }
+
+// return the recipe of the user at the url
+func GetRecipeHandler() http.Handler {
+	return RestMethods{
+		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		}),
+	}
+}
