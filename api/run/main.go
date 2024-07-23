@@ -8,7 +8,10 @@ import (
 	"github.com/James-Trauger/Recipouir/api"
 )
 
-const port = "9876"
+const (
+	port = "9876"
+	root = "/api"
+)
 
 func main() {
 	mux := http.NewServeMux()

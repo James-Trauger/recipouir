@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	reciauth "github.com/James-Trauger/Recipouir/auth"
@@ -105,7 +106,7 @@ func SignupHandler() http.Handler {
 			}
 
 			w.WriteHeader(http.StatusOK)
-			// successful signup message?
+			// TODO Dsuccessful signup message?
 		})),
 	}
 }
@@ -149,6 +150,24 @@ func AddRecipeHandler() http.Handler {
 func GetRecipeHandler() http.Handler {
 	return RestMethods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// indices of the user and recipe in the url path
+			const (
+				userIndex   = 2
+				recipeIndex = 3
+			)
+			// get the user and recipe from the path
+			paths := strings.Split(r.URL.Path, "/")
+			user, recipe := paths[userIndex], paths[recipeIndex]
+
+			rec, err := GetRecipe(user, recipe, r.Context())
+			if err != nil {
+				// TODO get recipe error
+				JSONError(w, http.StatusInternalServerError, errors.New("couldn't find recipe for the sepcified user"))
+			}
+
+			// return the recipe
+			w.WriteHeader(http.StatusAccepted)
+			json.NewEncoder(w).Encode(&rec)
 
 		}),
 	}
