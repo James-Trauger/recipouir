@@ -122,13 +122,30 @@ func GetRecipe(user, name string, ctx context.Context) (*model.Recipe, error) {
 	// filter based on the name of a recipe the specified user created
 	filter := bson.M{"name": name, "createdby": user}
 	var recipe model.Recipe
-	result := recipeCollection.FindOne(context.TODO(), filter)
+	result := recipeCollection.FindOne(ctx, filter)
 	err := result.Decode(&recipe)
 	if err != nil {
 		return nil, err
 	}
 
 	return &recipe, nil
+}
+
+// returns all the recipes that a particular user has
+func GetAllRecipes(user string, ctx context.Context) (*[]model.Recipe, error) {
+
+	// filter only on username
+	filter := bson.M{"createdby": user}
+	result, err := recipeCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var recipes []model.Recipe
+	if err := result.All(ctx, &recipes); err != nil {
+		return nil, err
+	}
+	return &recipes, nil
 }
 
 // inserts a single recipe assuming the user is authorized and returns nil on succes

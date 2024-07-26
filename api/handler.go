@@ -146,8 +146,9 @@ func AddRecipeHandler() http.Handler {
 	}
 }
 
+// /username/recipe-name
 // return the recipe of the user at the url
-func GetRecipeHandler() http.Handler {
+func GetRecipeURLHandler() http.Handler {
 	return RestMethods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// indices of the user and recipe in the url path
@@ -155,10 +156,37 @@ func GetRecipeHandler() http.Handler {
 				userIndex   = 2
 				recipeIndex = 3
 			)
+
 			// get the user and recipe from the path
 			paths := strings.Split(r.URL.Path, "/")
-			user, recipe := paths[userIndex], paths[recipeIndex]
 
+			pathLength := len(paths)
+
+			// no user provided
+			if pathLength < 3 {
+				JSONError(w, http.StatusBadRequest, errors.New("no username was specified"))
+				return
+			}
+
+			var user, recipe string
+			user = paths[userIndex]
+
+			if pathLength == 3 {
+				// get all of the user's recipes
+				recs, err := GetAllRecipes(user, r.Context())
+				if err != nil {
+					JSONError(w, http.StatusInternalServerError, err)
+				} else {
+					if err = json.NewEncoder(w).Encode(recs); err != nil {
+						JSONError(w, http.StatusInternalServerError, err)
+					}
+				}
+				return
+			}
+
+			recipe = paths[recipeIndex]
+
+			// retrieve a single recipe from the user
 			rec, err := GetRecipe(user, recipe, r.Context())
 			if err != nil {
 				// TODO get recipe error
