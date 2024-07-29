@@ -6,17 +6,25 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	reciauth "github.com/James-Trauger/Recipouir/auth"
 	"github.com/James-Trauger/Recipouir/model"
 	"github.com/James-Trauger/Recipouir/utils"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
-	SignupRoute = "user/signup"
-	LoginRoute  = "user/login"
+	SignupRoute      = "user/signup"
+	LoginRoute       = "user/login"
+	userPatternURL   = "username"
+	recipePatternURL = "recipe"
+)
+
+var (
+	ErrInternalServer = errors.New("internal server error")
+	ErrNotFound       = errors.New("route does not exist")
+	ErrNoRecipe       = errors.New("recipe not found")
 )
 
 func RootHandler() http.Handler {
@@ -146,57 +154,66 @@ func AddRecipeHandler() http.Handler {
 	}
 }
 
-// /username/recipe-name
+// /api/user/{username}/{recipe}
 // return the recipe of the user at the url
 func GetRecipeURLHandler() http.Handler {
 	return RestMethods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// indices of the user and recipe in the url path
-			const (
-				userIndex   = 2
-				recipeIndex = 3
-			)
-
-			// get the user and recipe from the path
-			paths := strings.Split(r.URL.Path, "/")
-
-			pathLength := len(paths)
-
-			// no user provided
-			if pathLength < 3 {
-				JSONError(w, http.StatusBadRequest, errors.New("no username was specified"))
-				return
+			user, recipe := r.PathValue(userPatternURL), r.PathValue(recipePatternURL)
+			if user == "" || recipe == "" {
+				JSONError(w, http.StatusNotFound, ErrNotFound)
 			}
 
-			var user, recipe string
-			user = paths[userIndex]
-
-			if pathLength == 3 {
-				// get all of the user's recipes
-				recs, err := GetAllRecipes(user, r.Context())
-				if err != nil {
-					JSONError(w, http.StatusInternalServerError, err)
-				} else {
-					if err = json.NewEncoder(w).Encode(recs); err != nil {
-						JSONError(w, http.StatusInternalServerError, err)
-					}
-				}
-				return
-			}
-
-			recipe = paths[recipeIndex]
-
-			// retrieve a single recipe from the user
 			rec, err := GetRecipe(user, recipe, r.Context())
 			if err != nil {
-				// TODO get recipe error
-				JSONError(w, http.StatusInternalServerError, errors.New("couldn't find recipe for the sepcified user"))
+				if errors.Is(err, mongo.ErrNoDocuments) {
+					JSONError(w, http.StatusNoContent, ErrNoRecipe)
+				}
+				// TODO get recipe error, check error type
+				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				return
 			}
 
 			// return the recipe
 			w.WriteHeader(http.StatusAccepted)
-			json.NewEncoder(w).Encode(&rec)
 
+			err = json.NewEncoder(w).Encode(&rec)
+			if err != nil {
+				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				return
+			}
+		}),
+	}
+}
+
+// returns all of a user's recipes
+// /api/user/username
+func GetUserRecipes() http.Handler {
+	return RestMethods{
+		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// retrieve the username from the url
+			user := r.PathValue(userPatternURL)
+			if user == "" {
+				JSONError(w, http.StatusNotFound, ErrNotFound)
+				return
+			}
+
+			recs, err := GetAllRecipes(user, r.Context())
+			if err != nil {
+				if len(*recs) == 0 {
+					JSONError(w, http.StatusNoContent, ErrNoRecipe)
+				}
+				// TODO check error type
+				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				return
+			}
+
+			w.WriteHeader(http.StatusAccepted)
+			err = json.NewEncoder(w).Encode(recs)
+			if err != nil {
+				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				return
+			}
 		}),
 	}
 }
