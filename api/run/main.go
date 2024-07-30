@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	port = "9876"
-	root = "/api"
+	port       = "9876"
+	rootPath   = "/api"
+	signupPath = "/signup"
+	loginPath  = "/login"
 )
 
 func main() {

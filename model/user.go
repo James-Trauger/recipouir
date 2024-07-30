@@ -55,6 +55,13 @@ type Login struct {
 	Pass  string `json:"pass"`
 }
 
+func NewLogin(uname, pass string) *Login {
+	return &Login{
+		Uname: uname,
+		Pass:  pass,
+	}
+}
+
 func (l *Login) Equal(l2 Login) bool {
 	return l != nil && l.Uname == l2.Uname && l.Pass == l2.Pass
 }

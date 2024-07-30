@@ -38,6 +38,8 @@ func TestSignup(t *testing.T) {
 	}
 }
 
+// test login
+
 func TestInsertGetRecipe(t *testing.T) {
 	// create a new recipe
 	user := "ned"

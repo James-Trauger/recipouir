@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	reciauth "github.com/James-Trauger/Recipouir/auth"
 	db "github.com/James-Trauger/Recipouir/database"
@@ -47,21 +46,21 @@ func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 	return user, nil
 }
 
-func Login(r *http.Request, ctx context.Context) (*model.User, int, error) {
+func Login(creds *model.Login, ctx context.Context) (*model.User, error) {
 
-	// retrieve username and password from the request
+	/* retrieve username and password from the request
 	login, err := model.ExtractLogin(r.Body)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
+		return nil, err
+	}*/
 
-	user, isAuthenticated := reciauth.Authenticate(login, ctx)
+	user, isAuthenticated := reciauth.Authenticate(creds, ctx)
 
 	if isAuthenticated == nil {
-		return user, http.StatusOK, nil
+		return user, nil
 	} else {
 		//return nil, http.StatusUnauthorized, errors.New("incorrect username or password")
-		return nil, http.StatusUnauthorized, isAuthenticated
+		return nil, isAuthenticated
 	}
 }
 
@@ -98,16 +97,25 @@ func GetUser(login model.Login) *model.User {
 }*/
 
 // returns nil on success
+// delete a user and their recipe data from the database
 func DeleteUser(target *model.User, ctx context.Context) error {
 	bs, err := bson.Marshal(target)
 	if err != nil {
 		return err
 	}
 
+	// delete user
 	result, err := userCollection.DeleteOne(ctx, bs)
 	if result.DeletedCount != 1 {
 		return errors.New("more than one user delete")
 	}
+	return err
+}
+
+func DeleteAllRecipes(user string, ctx context.Context) error {
+	// filter on which user created the recipe
+	filter := bson.M{"createdBy": user}
+	_, err := recipeCollection.DeleteMany(ctx, filter)
 	return err
 }
 

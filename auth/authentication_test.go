@@ -12,8 +12,8 @@ import (
 
 func TestAuthenticate(t *testing.T) {
 	login := model.Login{
-		Uname: "ned",
-		Pass:  "honor",
+		Uname: "jon",
+		Pass:  "snow",
 	}
 	user := model.NewUser(login.Uname, login.Pass)
 	userCollection := db.OpenCollection(db.Client, "test", "user")
@@ -42,8 +42,8 @@ func TestAuthenticate(t *testing.T) {
 
 	// try to authenticate with incorrect credentials
 	incorrectLogin := model.Login{
-		Uname: "ned",
-		Pass:  "honour",
+		Uname: "jon",
+		Pass:  "snow",
 	}
 
 	foundUser, err = Authenticate(&incorrectLogin, ctx)
