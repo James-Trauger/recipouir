@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	signupPath = "/api/signup"
-	loginPath  = "/api/login"
+	signupPath     = "/api/signup"
+	loginPath      = "/api/login"
+	deleteUserPath = "/api/user/remove"
 )
 
 // example users
@@ -124,7 +125,7 @@ func TestInvalidLoginHandler(t *testing.T) {
 	}
 
 	//////////////////////////
-	io.Copy(os.Stdout, w.Body)
+	//io.Copy(os.Stdout, w.Body)
 
 }
 
@@ -208,4 +209,61 @@ func TestTokenJson(t *testing.T) {
 	if !bytes.Equal(bts, expectedBts) {
 		t.Fatal("json does not match")
 	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	creds := jon
+	// signup a user
+	user, err := Signup(creds, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// incase there is an error before the handler is called
+	defer DeleteUser(user, ctx)
+
+	// get a jwt token
+	token, err := reciauth.NewToken(user.Username)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// example recipes
+	recs := []model.Recipe{*model.NewRecipe("cookies", user.Username,
+		[]model.Ingredient{model.NewIng("flour", 2, 1, "cup"), model.NewIng("vanilla", 1, 1, "teaspoon")},
+		[]string{"mix flour", "add vanilla"}),
+		*model.NewRecipe("muffins", user.Username,
+			[]model.Ingredient{model.NewIng("sugar", 1, 2, "cup"), model.NewIng("vanilla", 1, 3, "teaspoon")},
+			[]string{"add sugar", "mix vanilla"})}
+	// add some recipes
+	if err = InsertManyRecipe(&recs, user.Username, ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	reader, err := loginReader(creds)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := httptest.NewRequest(http.MethodPost, deleteUserPath, reader).WithContext(ctx)
+	// add the token
+	reciauth.AddTokenHeader(r, token)
+
+	w := httptest.NewRecorder()
+	// delete the user
+	DeleteUserHandler().ServeHTTP(w, r)
+
+	// check if the user was actually deleted
+	if w.Code != http.StatusOK {
+		io.Copy(os.Stdout, w.Body)
+		t.Fatal("couldn't delete user, status: ", w.Code)
+	}
+	_, err = Login(creds, ctx)
+	if err == nil {
+		t.Fatal("deleted user still exists")
+	}
+	if retrievedRecs, err := GetAllRecipes(user.Username, ctx); err == nil && len(*retrievedRecs) > 0 {
+		t.Fatal("deleted user still has recipes\n", retrievedRecs)
+	}
+
 }

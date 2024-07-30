@@ -107,14 +107,14 @@ func DeleteUser(target *model.User, ctx context.Context) error {
 	// delete user
 	result, err := userCollection.DeleteOne(ctx, bs)
 	if result.DeletedCount != 1 {
-		return errors.New("more than one user delete")
+		return errors.New("couldn't delete user")
 	}
 	return err
 }
 
 func DeleteAllRecipes(user string, ctx context.Context) error {
 	// filter on which user created the recipe
-	filter := bson.M{"createdBy": user}
+	filter := bson.M{"createdby": user}
 	_, err := recipeCollection.DeleteMany(ctx, filter)
 	return err
 }
@@ -164,7 +164,12 @@ func InsertRecipe(rec model.Recipe, user string, ctx context.Context) error {
 
 // insert multiple recipes assuming the user is authroized, returns nil on success
 func InsertManyRecipe(recipes *[]model.Recipe, user string, ctx context.Context) error {
-	cast := []any{*recipes} // TODO test this, prolly wont work
+	cast := make([]any, len(*recipes))
+	// cast each element to type any
+	for i := range *recipes {
+		cast[i] = any((*recipes)[i])
+	}
+
 	_, err := recipeCollection.InsertMany(ctx, cast)
 	return err
 }

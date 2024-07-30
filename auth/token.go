@@ -141,3 +141,7 @@ func Authroize(token, user string) bool {
 	// username of the token must match the passed username
 	return claims.Username == user
 }
+
+func AddTokenHeader(r *http.Request, token string) {
+	r.Header.Add("Authorization", "Bearer "+token)
+}

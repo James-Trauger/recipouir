@@ -25,7 +25,8 @@ func TestValidToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	// populate the header
-	req.Header.Add("Authorization", "Bearer "+tokenString)
+	//req.Header.Add("Authorization", "Bearer "+tokenString)
+	AddTokenHeader(req, tokenString)
 
 	// parse the header
 	rawToken, err := ParseTokenFromHeader(&req.Header)

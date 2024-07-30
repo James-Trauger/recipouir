@@ -137,13 +137,14 @@ func SignupHandler() http.Handler {
 	}
 }
 
+// delete a user and all their recipes
 func DeleteUserHandler() http.Handler {
 	return RestMethods{
 		http.MethodPost: validateToken(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// extract user
 			ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 			defer cancel()
 
+			// extract user
 			creds, err := model.ExtractLogin(r.Body)
 			if err != nil {
 				// TODO
@@ -168,6 +169,8 @@ func DeleteUserHandler() http.Handler {
 				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
 				return
 			}
+
+			w.WriteHeader(http.StatusOK)
 		})),
 	}
 }

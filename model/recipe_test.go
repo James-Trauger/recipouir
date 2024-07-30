@@ -18,9 +18,9 @@ var ings = []Ingredient{
 }
 
 var ingsJson = []string{
-	`{"Name":"flour","Amount":"1/2","Unit":"cup"}`,
-	`{"Name":"vanilla","Amount":"5","Unit":"gram"}`,
-	`{"Name":"chocolate","Amount":"2","Unit":"oz"}`,
+	`{"name":"flour","amount":"1/2","unit":"cup"}`,
+	`{"name":"vanilla","amount":"5","unit":"gram"}`,
+	`{"name":"chocolate","amount":"2","unit":"oz"}`,
 }
 
 var steps = []string{
@@ -80,7 +80,7 @@ func TestIngUnmarshal(t *testing.T) {
 
 func TestRecipeMarshal(t *testing.T) {
 	recipe := NewRecipe("mine", "ned", ings, steps)
-	raw, _ := json.RawMessage(fmt.Sprintf("{\"Name\":\"mine\",\"Ingredients\":[%s],\"Steps\":[\"mix the flour\",\"add the vanilla\"],\"CreatedBy\":\"ned\"}", strings.Join(ingsJson, ","))).MarshalJSON()
+	raw, _ := json.RawMessage(fmt.Sprintf("{\"name\":\"mine\",\"ingredients\":[%s],\"steps\":[\"mix the flour\",\"add the vanilla\"],\"createdby\":\"ned\"}", strings.Join(ingsJson, ","))).MarshalJSON()
 	//raw, _ := json.RawMessage(`{"name":"mine","ingredients":[{"name":"flour","amount":"1/2","unit":"cup"},{"name":"vanilla","amount":"5","unit":"gram"}],"steps":["mix the flour","add the vanilla"],"username":"ned"}`).MarshalJSON()
 
 	jsonBytes, err := json.Marshal(recipe)

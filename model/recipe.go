@@ -123,10 +123,10 @@ func EqualIngredients(i1, i2 []Ingredient) bool {
 }
 
 type Recipe struct {
-	Name        string       `json:"Name"`
-	Ingredients []Ingredient `json:"Ingredients"`
-	Steps       []string     `json:"Steps"`
-	CreatedBy   string       `json:"CreatedBy"`
+	Name        string       `json:"name"`
+	Ingredients []Ingredient `json:"ingredients"`
+	Steps       []string     `json:"steps"`
+	CreatedBy   string       `json:"createdby"`
 }
 
 /*
@@ -143,7 +143,7 @@ func NewRecipe(name, creator string, ingredients []Ingredient, steps []string) *
 }
 
 func (r *Recipe) Equal(r2 *Recipe) bool {
-	return r.Name == r2.Name && EqualIngredients(r.Ingredients, r2.Ingredients) &&
+	return r != nil && r2 != nil && r.Name == r2.Name && EqualIngredients(r.Ingredients, r2.Ingredients) &&
 		slices.Equal(r.Steps, r2.Steps) && r.CreatedBy == r2.CreatedBy
 }
 

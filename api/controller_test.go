@@ -100,10 +100,10 @@ func TestInsertManyRecipe(t *testing.T) {
 			t.Error(err)
 		}
 
-		/* delete the recipe
+		// delete the recipe
 		if err = DeleteRecipe(rec.Name, user, ctx); err != nil {
 			t.Error(err)
-		}*/
+		}
 
 		// compare the original recipe with the retrieved recipes
 		if !rec.Equal(retRec) {
