@@ -206,6 +206,8 @@ func AddRecipeHandler() http.Handler {
 			if err = InsertRecipe(recipe, recipe.CreatedBy, ctx); err != nil {
 				JSONError(w, http.StatusInternalServerError, err)
 			}
+
+			w.WriteHeader(http.StatusOK)
 		})),
 	}
 }
@@ -246,7 +248,7 @@ func GetRecipeURLHandler() http.Handler {
 
 // returns all of a user's recipes
 // /api/user/username
-func GetUserRecipes() http.Handler {
+func GetUserRecipesHandler() http.Handler {
 	return RestMethods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// retrieve the username from the url

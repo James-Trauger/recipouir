@@ -22,6 +22,7 @@ const (
 	signupPath     = "/api/signup"
 	loginPath      = "/api/login"
 	deleteUserPath = "/api/user/remove"
+	addRecipePath  = "/api/recipe/add"
 )
 
 // example users
@@ -211,7 +212,7 @@ func TestTokenJson(t *testing.T) {
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
+func TestDeleteUserHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	creds := jon
@@ -230,7 +231,7 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	// example recipes
-	recs := []model.Recipe{*model.NewRecipe("cookies", user.Username,
+	recs := []model.Recipe{*model.NewRecipe("brownies", user.Username,
 		[]model.Ingredient{model.NewIng("flour", 2, 1, "cup"), model.NewIng("vanilla", 1, 1, "teaspoon")},
 		[]string{"mix flour", "add vanilla"}),
 		*model.NewRecipe("muffins", user.Username,
@@ -266,4 +267,122 @@ func TestDeleteUser(t *testing.T) {
 		t.Fatal("deleted user still has recipes\n", retrievedRecs)
 	}
 
+}
+
+func TestAddRecipeHandler(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	//login to receive a token
+	creds := ned
+	token, err := reciauth.NewToken(creds.Uname)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// example recipe
+	rec := model.NewRecipe("muffins", creds.Uname,
+		[]model.Ingredient{model.NewIng("flour", 2, 1, "cup"), model.NewIng("vanilla", 1, 1, "teaspoon")},
+		[]string{"mix flour", "add vanilla"})
+	// create a reader for the request
+	bts, err := json.Marshal(&rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := bytes.NewReader(bts)
+	// create the request and add the recipe
+	r := httptest.NewRequest(http.MethodPost, addRecipePath, reader).WithContext(ctx)
+	// add the token header
+	reciauth.AddTokenHeader(r, token)
+
+	w := httptest.NewRecorder()
+
+	AddRecipeHandler().ServeHTTP(w, r)
+
+	// remove the recipe
+	defer func(recipe, user string, ctx context.Context) {
+		if err := DeleteRecipe(recipe, user, ctx); err != nil {
+			t.Log("couldn't delete a recipe -> ", err)
+		}
+	}(rec.Name, creds.Uname, ctx)
+
+	if w.Code != http.StatusOK {
+		io.Copy(os.Stdout, w.Body)
+		t.Fatal(w.Code)
+	}
+}
+
+func TestGetRecipeURLHandler(t *testing.T) {
+	const getRecipeURLPath = "/api/user/{" + userPatternURL + "}/{" + recipePatternURL + "}"
+	mux := http.NewServeMux()
+	mux.Handle(getRecipeURLPath, GetRecipeURLHandler())
+
+	r := httptest.NewRequest(http.MethodGet, "/api/user/ned/cookies", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		io.Copy(os.Stdout, w.Body)
+		t.Fatal(w.Code)
+	}
+
+	// example recipe
+	expected := model.NewRecipe("cookies", "ned",
+		[]model.Ingredient{model.NewIng("flour", 2, 1, "cup")},
+		[]string{"mix flour, sugar, and milk"})
+	var actual model.Recipe
+
+	json.NewDecoder(w.Body)
+	if err := json.NewDecoder(w.Body).Decode(&actual); err != nil {
+		t.Fatal(err)
+	}
+
+	if !expected.Equal(&actual) {
+		t.Fatalf("expected recipe does not match\nExpected %s\nReceived: %s\n", expected, actual)
+	}
+
+}
+
+func TestGetUserRecipeHandler(t *testing.T) {
+	const getRecipeURLPath = "/api/user/{" + userPatternURL + "}"
+	mux := http.NewServeMux()
+	mux.Handle(getRecipeURLPath, GetUserRecipesHandler())
+
+	r := httptest.NewRequest(http.MethodGet, "/api/user/ned", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		io.Copy(os.Stdout, w.Body)
+		t.Fatal(w.Code)
+	}
+
+	// example recipe
+	expected := []*model.Recipe{model.NewRecipe("cookies", "ned",
+		[]model.Ingredient{model.NewIng("flour", 2, 1, "cup")},
+		[]string{"mix flour, sugar, and milk"}),
+		model.NewRecipe("pasta", "ned",
+			[]model.Ingredient{model.NewIng("flour", 3, 1, "cup"), model.NewIng("eggs", 4, 1, "large")},
+			[]string{"mix flour and eggs"})}
+
+	var actual []model.Recipe
+	if err := json.NewDecoder(w.Body).Decode(&actual); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(actual) != len(expected) {
+		t.Fatal("different amount of recipes returned than expected")
+	}
+	// recipes could be out of order
+	for _, exprec := range expected {
+		var found bool = false
+		for _, actrec := range actual {
+			if exprec.Equal(&actrec) {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatal("returned recipes do not match")
+		}
+	}
 }
