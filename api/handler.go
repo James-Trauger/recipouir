@@ -15,10 +15,15 @@ import (
 )
 
 const (
-	SignupRoute      = "user/signup"
-	LoginRoute       = "user/login"
-	userPatternURL   = "username"
-	recipePatternURL = "recipe"
+	SignupPath     = "/api/signup"
+	LoginPath      = "/api/login"
+	DeleteUserPath = "/api/user/remove"
+	AddRecipePath  = "/api/recipe/add"
+
+	userPatternUrlKey   = "username"
+	recipePatternUrlKey = "recipe"
+	GetRecPath          = "/api/user/{" + userPatternUrlKey + "}/{" + recipePatternUrlKey + "}"
+	GetAllRecPath       = "/api/user/{" + userPatternUrlKey + "}"
 )
 
 var (
@@ -217,7 +222,7 @@ func AddRecipeHandler() http.Handler {
 func GetRecipeURLHandler() http.Handler {
 	return RestMethods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user, recipe := r.PathValue(userPatternURL), r.PathValue(recipePatternURL)
+			user, recipe := r.PathValue(userPatternUrlKey), r.PathValue(recipePatternUrlKey)
 			if user == "" || recipe == "" {
 				JSONError(w, http.StatusNotFound, ErrNotFound)
 			}
@@ -252,7 +257,7 @@ func GetUserRecipesHandler() http.Handler {
 	return RestMethods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// retrieve the username from the url
-			user := r.PathValue(userPatternURL)
+			user := r.PathValue(userPatternUrlKey)
 			if user == "" {
 				JSONError(w, http.StatusNotFound, ErrNotFound)
 				return

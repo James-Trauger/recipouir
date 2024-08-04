@@ -17,15 +17,12 @@ var (
 	recipeCollection    *mongo.Collection = db.OpenCollection(db.Client, db.DbName, "recipe")
 	ErrUserAlreadyExits                   = errors.New("user already exists")
 	ErrDbInsertionError                   = errors.New("couldn't insert the passed data")
+	ErrRecipeExists                       = errors.New("recipe already exists")
 )
 
+// adds a user to the database based on the provided credentials assuming the
+// username does not exist yet.
 func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
-
-	/*login, err := model.ExtractLogin(r.Body)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
-	}*/
-
 	// should return an error because the user doesn't exist yet
 	_, err := reciauth.Authenticate(login, ctx)
 
@@ -38,7 +35,6 @@ func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 	user := model.NewUser(login.Uname, login.Pass)
 	result, err := userCollection.InsertOne(ctx, user)
 	if err != nil {
-		//return nil, http.StatusInternalServerError, errors.New("couldn't insert new user into db")
 		return nil, ErrDbInsertionError
 	}
 	//user.ID = result.InsertedID.(primitive.ObjectID)
@@ -46,14 +42,9 @@ func Signup(login *model.Login, ctx context.Context) (*model.User, error) {
 	return user, nil
 }
 
+// validate a user's credentials and returns a valid jwt token
 func Login(creds *model.Login, ctx context.Context) (*model.User, error) {
-
-	/* retrieve username and password from the request
-	login, err := model.ExtractLogin(r.Body)
-	if err != nil {
-		return nil, err
-	}*/
-
+	// validate the credentials
 	user, isAuthenticated := reciauth.Authenticate(creds, ctx)
 
 	if isAuthenticated == nil {
@@ -63,38 +54,6 @@ func Login(creds *model.Login, ctx context.Context) (*model.User, error) {
 		return nil, isAuthenticated
 	}
 }
-
-/*
-func Login(login *model.Login, ctx context.Context) (*model.User, error) {
-	// retrieve the username from the jwt token
-	tokenUname := ctx.Value(userKey)
-	tokenUname, ok := tokenUname.(string)
-	// cast username to string
-	if !ok {
-		// username from the token is not a string
-		return nil, errors.New("inavlid username from jwt token")
-	}
-
-	// does the token match the
-
-}*/
-
-/* retrieves the target user *
-func GetUser(login model.Login) *model.User {
-
-	// give the query a 10 second time limit
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	filer := bson.M{"_id": login.Uname}
-	query := userCollection.FindOne(ctx, filer)
-
-	var user model.User
-	query.Decode(&user)
-
-	Authenticate()
-
-	return &user
-}*/
 
 // returns nil on success
 // delete a user and their recipe data from the database
@@ -112,6 +71,7 @@ func DeleteUser(target *model.User, ctx context.Context) error {
 	return err
 }
 
+// delete all of a user's recipes. used when a user wants to delete their account
 func DeleteAllRecipes(user string, ctx context.Context) error {
 	// filter on which user created the recipe
 	filter := bson.M{"createdby": user}
@@ -119,14 +79,9 @@ func DeleteAllRecipes(user string, ctx context.Context) error {
 	return err
 }
 
-/*
-reutrns the recipe from a specific user. Recipes are public so no authentication
-nor authorization is needed besides having a valid jwt token
-*/
+// reutrns the recipe from a specific user. Recipes are public so no authentication
+// nor authorization is needed besides having a valid jwt token
 func GetRecipe(user, name string, ctx context.Context) (*model.Recipe, error) {
-
-	//TODO validate token
-
 	// filter based on the name of a recipe the specified user created
 	filter := bson.M{"name": name, "createdby": user}
 	var recipe model.Recipe
@@ -158,6 +113,10 @@ func GetAllRecipes(user string, ctx context.Context) (*[]model.Recipe, error) {
 
 // inserts a single recipe assuming the user is authorized and returns nil on succes
 func InsertRecipe(rec model.Recipe, user string, ctx context.Context) error {
+	// see if the recipe already exists
+	if res, _ := GetRecipe(rec.CreatedBy, rec.Name, ctx); res != nil {
+		return ErrRecipeExists
+	}
 	_, err := recipeCollection.InsertOne(ctx, rec)
 	return err
 }

@@ -18,13 +18,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	signupPath     = "/api/signup"
-	loginPath      = "/api/login"
-	deleteUserPath = "/api/user/remove"
-	addRecipePath  = "/api/recipe/add"
-)
-
 // example users
 var (
 	ned = model.NewLogin("ned", "honor")
@@ -82,7 +75,7 @@ func TestLoginHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	r := httptest.NewRequest(http.MethodPost, loginPath, reader).WithContext(ctx)
+	r := httptest.NewRequest(http.MethodPost, LoginPath, reader).WithContext(ctx)
 	w := httptest.NewRecorder()
 	HandleLogin().ServeHTTP(w, r)
 
@@ -117,7 +110,7 @@ func TestInvalidLoginHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	r := httptest.NewRequest(http.MethodPost, loginPath, reader).WithContext(ctx)
+	r := httptest.NewRequest(http.MethodPost, LoginPath, reader).WithContext(ctx)
 	w := httptest.NewRecorder()
 	HandleLogin().ServeHTTP(w, r)
 
@@ -141,7 +134,7 @@ func TestSignupHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	signupReq := httptest.NewRequest(http.MethodPost, signupPath, reader).WithContext(ctx)
+	signupReq := httptest.NewRequest(http.MethodPost, SignupPath, reader).WithContext(ctx)
 	w := httptest.NewRecorder()
 
 	SignupHandler().ServeHTTP(w, signupReq)
@@ -187,7 +180,7 @@ func TestSignupDuplicateHandler(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodPost, signupPath, reader).WithContext(ctx)
+	r := httptest.NewRequest(http.MethodPost, SignupPath, reader).WithContext(ctx)
 
 	SignupHandler().ServeHTTP(w, r)
 
@@ -246,7 +239,7 @@ func TestDeleteUserHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := httptest.NewRequest(http.MethodPost, deleteUserPath, reader).WithContext(ctx)
+	r := httptest.NewRequest(http.MethodPost, DeleteUserPath, reader).WithContext(ctx)
 	// add the token
 	reciauth.AddTokenHeader(r, token)
 
@@ -291,7 +284,7 @@ func TestAddRecipeHandler(t *testing.T) {
 	}
 	reader := bytes.NewReader(bts)
 	// create the request and add the recipe
-	r := httptest.NewRequest(http.MethodPost, addRecipePath, reader).WithContext(ctx)
+	r := httptest.NewRequest(http.MethodPost, AddRecipePath, reader).WithContext(ctx)
 	// add the token header
 	reciauth.AddTokenHeader(r, token)
 
@@ -313,9 +306,8 @@ func TestAddRecipeHandler(t *testing.T) {
 }
 
 func TestGetRecipeURLHandler(t *testing.T) {
-	const getRecipeURLPath = "/api/user/{" + userPatternURL + "}/{" + recipePatternURL + "}"
 	mux := http.NewServeMux()
-	mux.Handle(getRecipeURLPath, GetRecipeURLHandler())
+	mux.Handle(GetRecPath, GetRecipeURLHandler())
 
 	r := httptest.NewRequest(http.MethodGet, "/api/user/ned/cookies", nil)
 	w := httptest.NewRecorder()
@@ -344,9 +336,8 @@ func TestGetRecipeURLHandler(t *testing.T) {
 }
 
 func TestGetUserRecipeHandler(t *testing.T) {
-	const getRecipeURLPath = "/api/user/{" + userPatternURL + "}"
 	mux := http.NewServeMux()
-	mux.Handle(getRecipeURLPath, GetUserRecipesHandler())
+	mux.Handle(GetAllRecPath, GetUserRecipesHandler())
 
 	r := httptest.NewRequest(http.MethodGet, "/api/user/ned", nil)
 	w := httptest.NewRecorder()
