@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -26,13 +25,6 @@ const (
 	GetAllRecPath       = "/api/user/{" + userPatternUrlKey + "}"
 )
 
-var (
-	ErrInternalServer     = errors.New("internal server error")
-	ErrNotFound           = errors.New("route does not exist")
-	ErrNoRecipe           = errors.New("recipe not found")
-	ErrInvalidCredentials = errors.New("invalid username or password")
-)
-
 func RootHandler() http.Handler {
 	return utils.Methods{
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,12 +33,13 @@ func RootHandler() http.Handler {
 	}
 }
 
+/*
 func JSONError(w http.ResponseWriter, code int, err error) (int, error) {
 	w.Header().Set("content-type", "application/json")
 	body := []byte(fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 	w.WriteHeader(code)
 	return w.Write(body)
-}
+}*/
 
 // returns the user within the query
 // /api/user?username=...
@@ -55,19 +48,16 @@ func userHandler() http.Handler {
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			username := r.URL.Query().Get("username")
 			if username == "" {
-				JSONError(w, http.StatusBadRequest, errors.New("no username query"))
+				NewJsonErr("no username query", http.StatusBadRequest).WriteError(w)
 				return
 			}
 			authErr := reciauth.Authorize(&r.Header, username)
 			if authErr != nil {
-				JSONError(w, http.StatusUnauthorized, authErr)
+				NewJsonErr(authErr.Error(), http.StatusUnauthorized).WriteError(w)
+				return
 			}
 		}),
 	}
-}
-
-type tokenResponse struct {
-	Token string `json:"token"`
 }
 
 // used to get jwt token
@@ -79,8 +69,7 @@ func HandleLogin() http.Handler {
 
 			creds, err := model.ExtractLogin(r.Body)
 			if err != nil {
-				// TODO
-				JSONError(w, http.StatusBadRequest, err)
+				NewJsonErr("invalid json", http.StatusBadRequest).WriteError(w)
 				return
 			}
 
@@ -88,7 +77,7 @@ func HandleLogin() http.Handler {
 
 			if err != nil {
 				// TODO check error type
-				JSONError(w, http.StatusBadRequest, ErrInvalidCredentials)
+				ErrInvalidCredentials.WriteError(w)
 				return
 			}
 
@@ -96,12 +85,14 @@ func HandleLogin() http.Handler {
 			// return a jwt token using RSA, expires a day from now
 			signed, err := reciauth.NewToken(user.Username)
 			if err != nil {
-				JSONError(w, http.StatusInternalServerError, errors.New("couldn't create jwt token"))
+				//TODO
+				ErrInternalServer.WriteError(w)
+				return
 			}
 			// add the token
 			w.Header().Set("content-type", "application/json")
 
-			tokResp := tokenResponse{Token: signed}
+			tokResp := TokenResponse{Token: signed}
 			json.NewEncoder(w).Encode(tokResp)
 			//fmt.Fprintf(w, "{token: %s}", signed)
 
@@ -116,7 +107,7 @@ func SignupHandler() http.Handler {
 
 			login, ok := ctx.Value(loginKey).(model.Login)
 			if !ok {
-				JSONError(w, http.StatusBadRequest, errors.New("no username or password provided"))
+				NewJsonErr("no username or password provided", http.StatusBadRequest).WriteError(w)
 				return
 			}
 
@@ -132,12 +123,12 @@ func SignupHandler() http.Handler {
 				} else {
 					status = http.StatusInternalServerError
 				}
-				JSONError(w, status, err)
+				NewJsonErr(err.Error(), status).WriteError(w)
 				return
 			}
 
 			w.WriteHeader(http.StatusOK)
-			// TODO Dsuccessful signup message?
+			// TODO successful signup message?
 		})),
 	}
 }
@@ -153,25 +144,25 @@ func DeleteUserHandler() http.Handler {
 			creds, err := model.ExtractLogin(r.Body)
 			if err != nil {
 				// TODO
-				JSONError(w, http.StatusBadRequest, err)
+				NewJsonErr(err.Error(), http.StatusBadRequest).WriteError(w)
 				return
 			}
 
 			// validate credentials
 			user, err := Login(creds, ctx)
 			if err != nil {
-				JSONError(w, http.StatusBadRequest, errors.New("invalid credentials"))
+				ErrInvalidCredentials.WriteError(w)
 				return
 			}
 
 			// delete the recipe data in db
 			if DeleteAllRecipes(user.Username, ctx) != nil {
-				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				ErrInternalServer.WriteError(w)
 				return
 			}
 			// delete user in db
 			if DeleteUser(user, ctx) != nil {
-				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				ErrInternalServer.WriteError(w)
 				return
 			}
 
@@ -187,20 +178,20 @@ func AddRecipeHandler() http.Handler {
 			var recipe model.Recipe
 			err := json.NewDecoder(r.Body).Decode(&recipe)
 			if err != nil {
-				JSONError(w, http.StatusBadRequest, errors.New("couldn't decode the recipe"))
+				NewJsonErr(err.Error(), http.StatusBadRequest).WriteError(w)
 				return
 			}
 
 			// get the username from the token
 			userToken := r.Context().Value(userKey)
 			if userToken == nil {
-				JSONError(w, http.StatusInternalServerError, errors.New("couldn't find user associated with the token"))
+				NewJsonErr("couldn't find user associated with the token", http.StatusInternalServerError).WriteError(w)
 				return
 			}
 
 			// token must match the user adding the recipe
 			if userToken != recipe.CreatedBy {
-				JSONError(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+				ErrUnauthorized.WriteError(w)
 				return
 			}
 
@@ -209,7 +200,8 @@ func AddRecipeHandler() http.Handler {
 			defer cancel()
 			// add the recipe
 			if err = InsertRecipe(recipe, recipe.CreatedBy, ctx); err != nil {
-				JSONError(w, http.StatusInternalServerError, err)
+				ErrInternalServer.WriteError(w)
+				return
 			}
 
 			w.WriteHeader(http.StatusOK)
@@ -224,16 +216,16 @@ func GetRecipeURLHandler() http.Handler {
 		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, recipe := r.PathValue(userPatternUrlKey), r.PathValue(recipePatternUrlKey)
 			if user == "" || recipe == "" {
-				JSONError(w, http.StatusNotFound, ErrNotFound)
+				ErrNotFound.WriteError(w)
 			}
 
 			rec, err := GetRecipe(user, recipe, r.Context())
 			if err != nil {
 				if errors.Is(err, mongo.ErrNoDocuments) {
-					JSONError(w, http.StatusNoContent, ErrNoRecipe)
+					ErrNoRecipe.WriteError(w)
 				}
 				// TODO get recipe error, check error type
-				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				ErrInternalServer.WriteError(w)
 				return
 			}
 
@@ -244,7 +236,7 @@ func GetRecipeURLHandler() http.Handler {
 
 			err = json.NewEncoder(w).Encode(&rec)
 			if err != nil {
-				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				ErrInternalServer.WriteError(w)
 				return
 			}
 		}),
@@ -259,17 +251,17 @@ func GetUserRecipesHandler() http.Handler {
 			// retrieve the username from the url
 			user := r.PathValue(userPatternUrlKey)
 			if user == "" {
-				JSONError(w, http.StatusNotFound, ErrNotFound)
+				ErrNotFound.WriteError(w)
 				return
 			}
 
 			recs, err := GetAllRecipes(user, r.Context())
 			if err != nil {
 				if len(*recs) == 0 {
-					JSONError(w, http.StatusNoContent, ErrNoRecipe)
+					ErrNoRecipe.WriteError(w)
 				}
 				// TODO check error type
-				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				ErrInternalServer.WriteError(w)
 				return
 			}
 
@@ -278,7 +270,7 @@ func GetUserRecipesHandler() http.Handler {
 			err = json.NewEncoder(w).Encode(recs)
 
 			if err != nil {
-				JSONError(w, http.StatusInternalServerError, ErrInternalServer)
+				ErrInternalServer.WriteError(w)
 				return
 			}
 		}),

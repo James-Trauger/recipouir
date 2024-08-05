@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 
@@ -30,7 +29,7 @@ func (rm RestMethods) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// handler not implemented
 		if handler == nil {
 			// error on the server side
-			JSONError(w, http.StatusInternalServerError, errors.New("Internal server error"))
+			ErrInternalServer.WriteError(w)
 		} else {
 			// pass on the the next handler
 			handler.ServeHTTP(w, r)
@@ -41,7 +40,8 @@ func (rm RestMethods) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// method is not supported, key doesn't exist in the map
 	w.Header().Add("Allow", utils.AllowedMethods(rm))
 	if r.Method != http.MethodOptions {
-		JSONError(w, http.StatusMethodNotAllowed, errors.New("Method not allowed"))
+		NewJsonErr("Method not allowed", http.StatusMethodNotAllowed).WriteError(w)
+		return
 	}
 }
 
@@ -67,14 +67,14 @@ func validateToken(next http.Handler) http.Handler {
 
 		// invalid token
 		if err != nil {
-			JSONError(w, http.StatusBadRequest, err)
+			NewJsonErr(err.Error(), http.StatusBadRequest).WriteError(w)
 			return
 		}
 
 		// claims of the token
 		claims, err := reciauth.ValidToken(token)
 		if err != nil {
-			JSONError(w, http.StatusBadRequest, errors.New("invalid token"))
+			NewJsonErr("invalid token", http.StatusBadRequest).WriteError(w)
 			return
 		}
 

@@ -84,7 +84,7 @@ func TestLoginHandler(t *testing.T) {
 	}
 
 	// verify the jwt token
-	var tokResp tokenResponse
+	var tokResp TokenResponse
 	err = json.NewDecoder(w.Body).Decode(&tokResp)
 	if err != nil {
 		t.Fatal("couldn't decode json response ", err)
@@ -191,7 +191,7 @@ func TestSignupDuplicateHandler(t *testing.T) {
 }
 
 func TestTokenJson(t *testing.T) {
-	tk := tokenResponse{
+	tk := TokenResponse{
 		Token: "signedToken",
 	}
 	bts, err := json.Marshal(&tk)

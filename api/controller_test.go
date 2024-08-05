@@ -43,8 +43,8 @@ func TestSignup(t *testing.T) {
 func TestInsertGetRecipe(t *testing.T) {
 	// create a new recipe
 	user := "ned"
-	rec := model.NewRecipe("cookies", user, []model.Ingredient{model.NewIng("flour", 2, 1, "cup")},
-		[]string{"mix flour, sugar, and milk"})
+	rec := model.NewRecipe("oatmeal cookies", user, []model.Ingredient{model.NewIng("oatmeal", 1, 2, "cup")},
+		[]string{"combine oats and sugar"})
 	// insert the recipe
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -77,8 +77,8 @@ func TestInsertGetRecipe(t *testing.T) {
 func TestInsertManyRecipe(t *testing.T) {
 	user := "ned"
 	recs := []model.Recipe{
-		*model.NewRecipe("cookies", user, []model.Ingredient{model.NewIng("flour", 2, 1, "cup")},
-			[]string{"mix flour, sugar, and milk"}),
+		*model.NewRecipe("oatmeal cookies", user, []model.Ingredient{model.NewIng("oatmeal", 1, 2, "cup")},
+			[]string{"combine oats and sugar"}),
 		*model.NewRecipe("brownies", user, []model.Ingredient{model.NewIng("sugar", 1, 3, "cup"), model.NewIng("butter", 1, 1, "stick")},
 			[]string{"combine sugar and butter"}),
 	}
