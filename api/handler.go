@@ -41,43 +41,36 @@ func JSONError(w http.ResponseWriter, code int, err error) (int, error) {
 	return w.Write(body)
 }*/
 
-// returns the user within the query
-// /api/user?username=...
-func userHandler() http.Handler {
-	return RestMethods{
-		http.MethodGet: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			username := r.URL.Query().Get("username")
-			if username == "" {
-				NewJsonErr("no username query", http.StatusBadRequest).WriteError(w)
-				return
-			}
-			authErr := reciauth.Authorize(&r.Header, username)
-			if authErr != nil {
-				NewJsonErr(authErr.Error(), http.StatusUnauthorized).WriteError(w)
-				return
-			}
-		}),
-	}
-}
-
 // used to get jwt token
 func HandleLogin() http.Handler {
 	return RestMethods{
-		http.MethodPost: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		http.MethodPost: authenticateLogin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			/*ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 			defer cancel()
 
-			creds, err := model.ExtractLogin(r.Body)
-			if err != nil {
+			creds, ok := ctx.Value(loginKey).(model.Login)
+			if !ok {
 				NewJsonErr("invalid json", http.StatusBadRequest).WriteError(w)
 				return
 			}
+			/*creds, err := model.ExtractLogin(r.Body)
+			if err != nil {
+				NewJsonErr("invalid json", http.StatusBadRequest).WriteError(w)
+				return
+			}*
 
-			user, err := Login(creds, ctx)
+			user, err := Login(&creds, ctx)
 
 			if err != nil {
 				// TODO check error type
 				ErrInvalidCredentials.WriteError(w)
+				return
+			}*/
+
+			ctx := r.Context()
+			user, ok := ctx.Value(userKey).(model.User)
+			if !ok {
+				ErrInternalServer.WriteError(w)
 				return
 			}
 
@@ -96,7 +89,7 @@ func HandleLogin() http.Handler {
 			json.NewEncoder(w).Encode(tokResp)
 			//fmt.Fprintf(w, "{token: %s}", signed)
 
-		}),
+		})),
 	}
 }
 
@@ -136,11 +129,11 @@ func SignupHandler() http.Handler {
 // delete a user and all their recipes
 func DeleteUserHandler() http.Handler {
 	return RestMethods{
-		http.MethodPost: validateToken(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-			defer cancel()
+		http.MethodPost: validateToken(authenticateLogin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			//ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+			//defer cancel()
 
-			// extract user
+			/* extract user
 			creds, err := model.ExtractLogin(r.Body)
 			if err != nil {
 				// TODO
@@ -153,6 +146,13 @@ func DeleteUserHandler() http.Handler {
 			if err != nil {
 				ErrInvalidCredentials.WriteError(w)
 				return
+			}*/
+
+			ctx := r.Context()
+			user, ok := ctx.Value(userKey).(model.User)
+			if !ok {
+				ErrInternalServer.WriteError(w)
+				return
 			}
 
 			// delete the recipe data in db
@@ -161,13 +161,13 @@ func DeleteUserHandler() http.Handler {
 				return
 			}
 			// delete user in db
-			if DeleteUser(user, ctx) != nil {
+			if DeleteUser(&user, ctx) != nil {
 				ErrInternalServer.WriteError(w)
 				return
 			}
 
 			w.WriteHeader(http.StatusOK)
-		})),
+		}))),
 	}
 }
 

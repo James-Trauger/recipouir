@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	reciauth "github.com/James-Trauger/Recipouir/auth"
 	"github.com/James-Trauger/Recipouir/model"
@@ -14,7 +15,8 @@ import (
 type tokenUnameKey int
 
 const (
-	userKey tokenUnameKey = iota
+	usernameKey tokenUnameKey = iota
+	userKey
 	loginKey
 )
 
@@ -54,10 +56,26 @@ func drainAndClose(next http.Handler) http.Handler {
 	})
 }
 
-func authenticateLogin(next http.Handler, tokenUser string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		model.ExtractLogin(r.Body)
-	})
+func authenticateLogin(next http.Handler) http.Handler {
+	return loginExtractor(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		creds, ok := ctx.Value(loginKey).(model.Login)
+		if !ok {
+			NewJsonErr("invalid json", http.StatusBadRequest).WriteError(w)
+			return
+		}
+		user, err := Login(&creds, ctx)
+
+		if err != nil {
+			// TODO check error type
+			ErrInvalidCredentials.WriteError(w)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, userKey, *user)))
+	}))
 }
 
 func validateToken(next http.Handler) http.Handler {
@@ -100,36 +118,3 @@ func loginExtractor(next http.Handler) http.Handler {
 		}
 	})
 }
-
-/* handles login requests
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	// retrieve the username from the jwt token
-	tokenUname := r.Context().Value(userKey)
-	tokenUname, ok := tokenUname.(string)
-	// cast username to string
-	if !ok {
-		// username from the token is not a string
-		JSONError(w, http.StatusBadRequest, errors.New("inavlid username from jwt token"))
-		return
-	}
-
-	// copy of the body for
-	body, err := r.GetBody()
-	if err != nil {
-		JSONError(w, http.StatusInternalServerError, errors.New("interal server error"))
-		return
-	}
-	// retrieve credentials from the request
-	reqLogin, err := model.ExtractLogin(body)
-	if err != nil {
-		//TODO bad request, invalid format
-		return
-	}
-
-	// authorize the user
-	if tokenUname != reqLogin.Uname {
-		JSONError(w, http.StatusUnauthorized, errors.New("can't login as that user with the token provided"))
-		return
-	}
-
-}*/

@@ -80,6 +80,7 @@ func TestLoginHandler(t *testing.T) {
 	HandleLogin().ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
+		io.Copy(os.Stdout, w.Body)
 		t.Fatal("incorrect status code ", w.Code)
 	}
 
