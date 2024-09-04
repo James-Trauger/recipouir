@@ -18,7 +18,7 @@ services:
     volumes:
       - database-vol:/data/db
 
-  server:
+  api:
     image: recipouir:1.0.0
     container_name: reciapi
     build:
