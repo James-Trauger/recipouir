@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -18,8 +19,9 @@ func DBinstance() *mongo.Client {
 	if err != nil {
 		log.Fatal("Couldn't load .env file for database connection -> " + err.Error())
 	}*/
-	mongoDB := os.Getenv("MONGODB_URL")
-
+	//mongoDB := "mongodb://" + os.Getenv("MONGODB_HOST") + "):" + os.Getenv("MONGODB_PORT") + "/"
+	mongoDB := fmt.Sprintf("mongodb://%s:%s/", os.Getenv("DATABASE_HOST"), os.Getenv("DATABASE_PORT"))
+	//mongodb://127.0.0.1:27017/
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoDB))

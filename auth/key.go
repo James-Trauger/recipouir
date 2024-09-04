@@ -27,12 +27,11 @@ func initKeys() (*rsa.PublicKey, *rsa.PrivateKey) {
 		log.Println("couldn't load environment file -> " + err.Error())
 		return nil, nil
 	}*/
-
-	certPath := os.Getenv("CERT_PATH")
-	privPath := os.Getenv("KEY_PATH")
+	certPath := os.Getenv("SECRET_PATH") + os.Getenv("CERT_NAME")
+	privPath := os.Getenv("SECRET_PATH") + os.Getenv("KEY_NAME")
 	certFile, err := os.Open(certPath)
 	if err != nil {
-		log.Println("couldn't open certificate -> " + err.Error())
+		log.Println("couldn't open certificate: " + certPath + " -> " + err.Error())
 		return nil, nil
 	}
 	privFile, err := os.Open(privPath)

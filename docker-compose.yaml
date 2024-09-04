@@ -21,6 +21,8 @@ services:
   api:
     image: recipouir:1.0.0
     container_name: reciapi
+    volumes:
+      - ${LOCAL_CERT}:/certs
     build:
       context: ./
       dockerfile: ./api/Dockerfile
