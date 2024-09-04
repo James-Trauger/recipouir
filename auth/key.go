@@ -9,8 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -24,14 +22,14 @@ func init() {
 
 func initKeys() (*rsa.PublicKey, *rsa.PrivateKey) {
 	// load the environment containing the public key
-	err := godotenv.Load("../.env")
+	/*err := godotenv.Load("../.env")
 	if err != nil {
 		log.Println("couldn't load environment file -> " + err.Error())
 		return nil, nil
-	}
+	}*/
 
-	certPath := os.Getenv("CERT")
-	privPath := os.Getenv("KEY")
+	certPath := os.Getenv("CERT_PATH")
+	privPath := os.Getenv("KEY_PATH")
 	certFile, err := os.Open(certPath)
 	if err != nil {
 		log.Println("couldn't open certificate -> " + err.Error())

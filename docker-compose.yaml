@@ -25,7 +25,7 @@ services:
       context: ./
       dockerfile: ./api/Dockerfile
     env_file:
-      - .env
+      - ./.env
     ports:
       - ${API_PORT}:443
     depends_on:

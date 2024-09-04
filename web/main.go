@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/James-Trauger/Recipouir/templates"
 	"github.com/James-Trauger/Recipouir/utils"
+	"github.com/James-Trauger/Recipouir/web/templates"
 	"github.com/a-h/templ"
 )
 

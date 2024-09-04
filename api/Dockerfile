@@ -22,6 +22,7 @@ RUN go build -C api/run -o reciapi
 FROM gcr.io/distroless/base-debian12
 WORKDIR /app
 COPY --from=builder /build/api/run/reciapi ./reciapi 
+COPY --from=builder /build/.env .
 #COPY ${LOCAL_CERT} ./certs/
 #COPY ${LOCAL_KEY} ./certs/
 #ARG cert=${CERT_PATH}
