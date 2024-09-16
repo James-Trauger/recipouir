@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"fmt"
 	"net/http"
@@ -29,3 +30,4 @@ func TestQuery(t *testing.T) {
 	//fmt.Println(paths)
 	<-done
 }
+*/

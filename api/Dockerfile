@@ -18,6 +18,6 @@ FROM gcr.io/distroless/base-debian12
 WORKDIR /app
 COPY --from=builder /go/bin/reciapi ./reciapi 
 COPY --from=builder /build/.env ./
-COPY --from=builder /certs /certs
+#COPY --from=builder /certs /certs
 
 CMD [ "/app/reciapi" ]

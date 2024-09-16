@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/James-Trauger/Recipouir/api"
 )
@@ -15,7 +14,8 @@ const (
 func main() {
 	//cert := os.Getenv("CERT")
 	//key := os.Getenv("KEY")
-	port := os.Getenv("PORT")
+	//port := os.Getenv("PORT")
+	port := "9872"
 	mux := http.NewServeMux()
 
 	// register all routes TODO change recipe model's _id
