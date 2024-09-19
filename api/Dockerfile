@@ -14,6 +14,8 @@ RUN go mod download -C /build
 RUN go build -C api/run -o /go/bin/reciapi 
 #RUN go build -C web/ -o /go/bin/recipouir
 
+#CMD ["tail", "-f", "/dev/null"]
+
 FROM gcr.io/distroless/base-debian12
 WORKDIR /app
 COPY --from=builder /go/bin/reciapi ./reciapi 

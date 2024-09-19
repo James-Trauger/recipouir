@@ -3,19 +3,22 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/James-Trauger/Recipouir/api"
+	"github.com/joho/godotenv"
 )
 
 const (
-	host = "127.0.0.1:"
+	host = "0.0.0.0:"
 )
 
 func main() {
+	godotenv.Load("../../.env")
+
 	//cert := os.Getenv("CERT")
-	//key := os.Getenv("KEY")
-	//port := os.Getenv("PORT")
-	port := "9872"
+	port := os.Getenv("PORT")
+	//port := "9872"
 	mux := http.NewServeMux()
 
 	// register all routes TODO change recipe model's _id

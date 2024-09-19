@@ -26,7 +26,6 @@ services:
       - type: bind
         source: ../certs
         target: /certs
-
     build:
       context: ./
       dockerfile: ./api/Dockerfile
