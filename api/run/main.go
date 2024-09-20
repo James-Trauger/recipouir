@@ -17,7 +17,7 @@ func main() {
 	godotenv.Load("../../.env")
 
 	//cert := os.Getenv("CERT")
-	port := os.Getenv("PORT")
+	port := os.Getenv("API_PORT")
 	//port := "9872"
 	mux := http.NewServeMux()
 
@@ -29,6 +29,6 @@ func main() {
 	mux.Handle(api.AddRecipePath, api.AddRecipeHandler())
 	mux.Handle(api.GetRecPath, api.GetRecipeURLHandler())
 	mux.Handle(api.GetAllRecPath, api.GetUserRecipesHandler())
-
+	log.Println("listening on ", host, port)
 	log.Println(http.ListenAndServe(host+port, mux))
 }
