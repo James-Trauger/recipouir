@@ -30,9 +30,10 @@ func main() {
 	mux.Handle("/styles/", http.StripPrefix("/styles", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer utils.DrainClose(r.Body)
 
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("content-type", "text/css")
+		//w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/css")
 		// write the file
+		fmt.Print(filepath.Join(styles, r.URL.Path))
 		http.ServeFile(w, r, filepath.Join(styles, r.URL.Path))
 	})))
 
@@ -47,9 +48,6 @@ func main() {
 		templates.Page(templates.NewNav(routes, "my recipes"),
 			[]string{"/styles/topnav.css"}, templates.RecipePage()).Render(r.Context(), w)
 	})
-	fmt.Println(http.ListenAndServeTLS(*addr, *cert, *pkey, mux))
-}
-
-func DrainAndClose(next http.Handler) {
-
+	//fmt.Println(http.ListenAndServeTLS(*addr, *cert, *pkey, mux))
+	fmt.Println(http.ListenAndServe(*addr, mux))
 }
