@@ -4,9 +4,12 @@ import (
 	"github.com/a-h/templ"
 )
 
+// a page included in the navbar
 type Nav struct {
+	// current page the user is on
 	active string
-	pages  map[string]templ.SafeURL
+	// link to the page that the nav element is linked to
+	pages map[string]templ.SafeURL
 }
 
 func (n *Nav) Render() templ.Component {
