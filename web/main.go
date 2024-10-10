@@ -25,11 +25,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// root handler
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		templates.Page(templates.NewNav(routes, "home"),
-			[]string{}, //[]string{"/styles/topnav.css"},
-			templates.Welcome()).Render(r.Context(), w)
-	})
+	mux.Handle(string(routes[rootName]), rootHandler())
 
 	// my recipes handler
 	mux.HandleFunc("/myrecipes", func(w http.ResponseWriter, r *http.Request) {

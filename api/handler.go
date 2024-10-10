@@ -33,39 +33,10 @@ func RootHandler() http.Handler {
 	}
 }
 
-/*
-func JSONError(w http.ResponseWriter, code int, err error) (int, error) {
-	w.Header().Set("content-type", "application/json")
-	body := []byte(fmt.Sprintf("{\"error\":\"%s\"}\n", err))
-	w.WriteHeader(code)
-	return w.Write(body)
-}*/
-
 // used to get jwt token
 func HandleLogin() http.Handler {
 	return RestMethods{
 		http.MethodPost: authenticateLogin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			/*ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-			defer cancel()
-
-			creds, ok := ctx.Value(loginKey).(model.Login)
-			if !ok {
-				NewJsonErr("invalid json", http.StatusBadRequest).WriteError(w)
-				return
-			}
-			/*creds, err := model.ExtractLogin(r.Body)
-			if err != nil {
-				NewJsonErr("invalid json", http.StatusBadRequest).WriteError(w)
-				return
-			}*
-
-			user, err := Login(&creds, ctx)
-
-			if err != nil {
-				// TODO check error type
-				ErrInvalidCredentials.WriteError(w)
-				return
-			}*/
 
 			ctx := r.Context()
 			user, ok := ctx.Value(userKey).(model.User)
@@ -130,23 +101,6 @@ func SignupHandler() http.Handler {
 func DeleteUserHandler() http.Handler {
 	return RestMethods{
 		http.MethodPost: validateToken(authenticateLogin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-			//defer cancel()
-
-			/* extract user
-			creds, err := model.ExtractLogin(r.Body)
-			if err != nil {
-				// TODO
-				NewJsonErr(err.Error(), http.StatusBadRequest).WriteError(w)
-				return
-			}
-
-			// validate credentials
-			user, err := Login(creds, ctx)
-			if err != nil {
-				ErrInvalidCredentials.WriteError(w)
-				return
-			}*/
 
 			ctx := r.Context()
 			user, ok := ctx.Value(userKey).(model.User)
