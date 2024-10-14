@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"regexp"
 )
 
 var (
@@ -23,8 +22,8 @@ func main() {
 		"/about",
 	}
 
-	mux.Handle("/assets", mimeMiddleware(http.FileServer(http.Dir("./assets"))))
-
+	// serve assets built with react
+	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	for _, r := range routes {
 		mux.Handle(r, rootHandler())
 	}
@@ -32,29 +31,7 @@ func main() {
 	fmt.Println(http.ListenAndServeTLS(*addr, *cert, *pkey, mux))
 }
 
-func mimeMiddleware(next http.Handler) http.Handler {
-	// extract the file extension from a file
-	js, _ := regexp.Compile(".js$")
-	css, _ := regexp.Compile(".css$")
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		p := r.URL.Path
-
-		next.ServeHTTP(w, r)
-
-		/*parts := strings.Split(p, "/")
-		// extract the last segment of the path
-		fileName := parts[len(parts)-1]*/
-		fmt.Println(p)
-		if js.MatchString(p) {
-			w.Header().Set("Content-Type", "text/javascript")
-		} else if css.MatchString(p) {
-			w.Header().Set("Content-Type", "text/css")
-		}
-
-	})
-}
-
+// serves index.tmpl
 func rootHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
