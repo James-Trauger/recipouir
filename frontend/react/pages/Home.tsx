@@ -1,5 +1,6 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import "./Login";
+import Login from './Login';
 
 export default function Home() {
   return (
@@ -7,6 +8,9 @@ export default function Home() {
     <div>
         <Link to="/about">About page</Link>
     </div>*/
-    <h1>Home</h1>
+    <div>
+      <h1>Home</h1>
+      <Login />
+    </div>
   )
 }

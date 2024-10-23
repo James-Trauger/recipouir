@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
-import About from "./pages/About"
-import Home from "./pages/Home"
-import Topnav from "./pages/Topnav";
+import About from "./pages/About";
+import Home from "./pages/Home";
+import Topnav from "./components/Topnav";
+
 
 const root = ReactDOM.createRoot(document.querySelector("#application")!);
 root.render(

@@ -24,4 +24,4 @@ yarn-error.log*
 
 *_templ.go
 
-/frontend/assets/
+frontend/assets/

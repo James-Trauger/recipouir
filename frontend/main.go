@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"mime"
 	"net/http"
 )
 
@@ -15,6 +17,9 @@ var (
 func main() {
 	flag.Parse()
 
+	//; charset=utf-8
+	mime.AddExtensionType(".js", "text/javascript; charset=utf-8")
+	mime.AddExtensionType(".css", "text/css; charset=utf-8")
 	mux := http.NewServeMux()
 
 	routes := []string{
@@ -24,6 +29,7 @@ func main() {
 
 	// serve assets built with react
 	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
+	// serve a single static page
 	for _, r := range routes {
 		mux.Handle(r, rootHandler())
 	}
@@ -38,5 +44,17 @@ func rootHandler() http.Handler {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 		http.ServeFile(w, r, "./views/index.html")
+	})
+}
+
+func serverErrorHandler(err error, from string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("error from ", from, " -> ", err.Error())
+		// write the error message
+		_, writeErr := w.Write([]byte("internal server error"))
+		if writeErr != nil {
+			log.Println("couldn't write error message -> ", writeErr)
+		}
 	})
 }
