@@ -10,7 +10,7 @@ export default function Home() {
     </div>*/
     <div>
       <h1>Home</h1>
-      <Login />
+      <a href="/login">Login</a>
     </div>
   )
 }
