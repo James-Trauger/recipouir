@@ -6,6 +6,9 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -16,6 +19,24 @@ var (
 
 func main() {
 	flag.Parse()
+	// load the config file
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Println("couldn't load .env -> ", err)
+	}
+	certPath := os.Getenv("LOCAL_CERT")
+	if certPath != "" {
+		certPath = "../" + certPath
+		certFile := os.Getenv("CERT_NAME")
+		if *cert == "" && certFile != "" {
+			*cert = certPath + certFile
+		} else {
+			log.Fatal("no certificate provided")
+		}
+		pkeyFile := os.Getenv("KEY_NAME")
+		if *pkey == "" && pkeyFile != "" {
+			*pkey = certPath + pkeyFile
+		}
+	}
 
 	//; charset=utf-8
 	mime.AddExtensionType(".js", "text/javascript; charset=utf-8")
