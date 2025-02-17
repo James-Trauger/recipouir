@@ -3,7 +3,6 @@ module github.com/James-Trauger/Recipouir
 go 1.22.5
 
 require (
-	github.com/a-h/templ v0.2.747
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.16.0

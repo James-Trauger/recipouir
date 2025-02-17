@@ -1,0 +1,110 @@
+# API tutorial using the REST client extension available in VS Code. 
+# Alternatively, you can use any api testing software, just copy the example requests below
+
+# First, we're going to signup and and a user to the database
+POST http://localhost:9872/api/signup
+Content-Type: application/json 
+
+{
+    "Uname": "james",
+    "Pass": "123"
+}
+
+###
+# Lets login using the same credentials to receive our json web token.
+# The reponse of this request will have a json web token, make sure to copy it for future requests.
+POST http://localhost:9872/api/login
+Content-Type: application/json 
+
+{
+    "Uname": "james",
+    "Pass": "123"
+}
+
+###
+# Using the token we just received, let us add a new recipe
+POST http://localhost:9872/api/recipe/add
+Content-Type: application/json
+Authorization: Bearer insert_token_here
+
+{
+    "Name": "cookies",
+    "Ingredients": [
+        {
+            "Name": "sugar",
+            "Amount": "1/2",
+            "Unit": "cups"
+        },
+        {
+            "Name": "flour",
+            "Amount": "2",
+            "Unit": "cups"
+        },
+        {
+            "Name": "vanilla extract",
+            "Amount": "1/4",
+            "Unit": "tsp"
+        }
+    ],
+    "Steps": [
+        "combine sugar and flour",
+        "mix vanilla and dry ingredients",
+        "bake :)"
+    ],
+    "CreatedBy": "james"
+}
+
+###
+# add another recipe
+POST http://localhost:9872/api/recipe/add
+Content-Type: application/json
+Authorization: Bearer isnert_token_here
+
+{
+    "Name": "bronies",
+    "Ingredients": [
+        {
+            "Name": "brown sugar",
+            "Amount": "1/3",
+            "Unit": "cups"
+        },
+        {
+            "Name": "butter",
+            "Amount": "1",
+            "Unit": "stick"
+        },
+        {
+            "Name": "chopped almonds",
+            "Amount": "1/4",
+            "Unit": "cup"
+        }
+    ],
+    "Steps": [
+        "melt butter",
+        "add sugar, butter, and almonds to baking sheet",
+        "bake :)"
+    ],
+    "CreatedBy": "james"
+}
+
+###
+# verify the recipe was added to the database
+GET http://localhost:9872/api/user/james/cookies
+
+###
+# if you add anymore of your own recipes, use this request to see all of them with
+# the appropriate username
+GET http://localhost:9872/api/user/james
+
+###
+# Delete the user and all of the recipes associated with them.
+# Try the previous 2 GET requests to see the removed user was actually removed.
+# Try logging in as well
+POST http://localhost:9872/api/user/remove
+Content-Type: application/json 
+Authorization: Bearer insert_token_here
+
+{
+    "Uname": "james",
+    "Pass": "123"
+}

@@ -5,13 +5,6 @@ import (
 	"net/http"
 )
 
-/*
-	ErrInternalServer     = errors.New("internal server error")
-	ErrNotFound           = errors.New("route does not exist")
-	ErrNoRecipe           = errors.New("recipe not found")
-	ErrInvalidCredentials = errors.New("invalid username or password")
-*/
-
 var (
 	ErrInternalServer = JsonError{
 		Msg:  "internal server error",

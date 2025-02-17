@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,13 +16,10 @@ const (
 
 func main() {
 	godotenv.Load("../../.env")
-
-	//cert := os.Getenv("CERT")
+	fmt.Println("mongo db is " + os.Getenv("MONGODB_URL"))
 	port := os.Getenv("API_PORT")
-	//port := "9872"
 	mux := http.NewServeMux()
 
-	// register all routes TODO change recipe model's _id
 	mux.Handle("/api/", api.RootHandler())
 	mux.Handle(api.LoginPath, api.HandleLogin())
 	mux.Handle(api.SignupPath, api.SignupHandler())

@@ -24,8 +24,8 @@ services:
     volumes:
       #- ${LOCAL_CERT}:/certs
       - type: bind
-        source: ../certs
-        target: /certs
+        source: ${LOCAL_CERT}
+        target: ${SECRET_PATH}
     build:
       context: ./
       dockerfile: ./api/Dockerfile

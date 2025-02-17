@@ -92,7 +92,6 @@ func SignupHandler() http.Handler {
 			}
 
 			w.WriteHeader(http.StatusOK)
-			// TODO successful signup message?
 		})),
 	}
 }

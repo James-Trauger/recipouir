@@ -122,7 +122,6 @@ func ValidToken(rawToken string) (*UserClaims, error) {
 
 	token, err := jwt.ParseWithClaims(rawToken, &UserClaims{}, VerifyToken)
 	if err != nil {
-		//JSONError(w, http.StatusInternalServerError, errors.New("couldn't parse token -> "+err.Error()))
 		return nil, err
 	}
 	claims := token.Claims.(*UserClaims)
