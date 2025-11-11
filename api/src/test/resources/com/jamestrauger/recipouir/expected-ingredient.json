@@ -1,0 +1,11 @@
+{
+    "id": {
+        "name": "sugar"
+    },
+    "amount": 100,
+    "unit": "grams",
+    "partialAmount": {
+        "numerator": 1,
+        "denominator": 1
+    }
+}
