@@ -4,4 +4,4 @@ INSERT INTO step (number, recipe_id, description) VALUES (1, 99, 'mix the ingred
 INSERT INTO step (number, recipe_id, description) VALUES (2, 99, 'bake at 350');
 INSERT INTO ingredient (name, recipe_id, amount, unit) VALUES ('sugar', 99, 100, 'grams');
 INSERT INTO ingredient (name, recipe_id, amount, unit, denominator) 
-    VALUES ('butter', 99, 1, 'cup', 2);
+    VALUES ('butter', 99, 1, 'cups', 2);
