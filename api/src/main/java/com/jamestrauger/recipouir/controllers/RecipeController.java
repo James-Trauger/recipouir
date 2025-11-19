@@ -1,5 +1,6 @@
 package com.jamestrauger.recipouir.controllers;
 
+import java.net.URI;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -9,29 +10,32 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.jamestrauger.recipouir.errors.NotFoundException;
+import org.springframework.web.util.UriComponentsBuilder;
 import com.jamestrauger.recipouir.models.Recipe;
 import com.jamestrauger.recipouir.repositories.RecipeRepository;
 
 @RestController
 @RequestMapping("/recipes")
 class RecipeController {
-    
+
     private final RecipeRepository recipeRepository;
 
     private RecipeController(RecipeRepository recipeRepository) {
         this.recipeRepository = recipeRepository;
     }
 
-    @GetMapping("/")
+    @GetMapping
     public Iterable<Recipe> findAllRecipes() {
         return this.recipeRepository.findAll();
     }
 
-    @PostMapping("/")
-    public Recipe newEmployee(@RequestBody Recipe recipe) {
-        return this.recipeRepository.save(recipe);
+    @PostMapping
+    private ResponseEntity<Void> createRecipe(@RequestBody Recipe recipeRequest,
+            UriComponentsBuilder ucb) {
+        Recipe savedRecipe = recipeRepository.save(recipeRequest);
+        URI locationOfNewRecipe =
+                ucb.path("recipes/{id}").buildAndExpand(savedRecipe.getId()).toUri();
+        return ResponseEntity.created(locationOfNewRecipe).build();
     }
 
     @GetMapping("/{requestedId}")
@@ -39,7 +43,7 @@ class RecipeController {
         Optional<Recipe> recipeOptional = recipeRepository.findById(requestedId);
         if (recipeOptional.isPresent())
             return ResponseEntity.ok(recipeOptional.get());
-        else 
+        else
             return ResponseEntity.notFound().build();
     }
 }

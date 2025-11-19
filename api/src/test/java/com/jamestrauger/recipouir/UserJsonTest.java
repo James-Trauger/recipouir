@@ -13,7 +13,7 @@ import com.jamestrauger.recipouir.models.User;
 
 @JsonTest
 class UserJsonTest {
-    
+
     @Autowired
     private JacksonTester<User> json;
 
@@ -36,7 +36,7 @@ class UserJsonTest {
         String lastName = "stark";
         User user = new User(username, firstName, lastName);
         user.setId(47L);
-        
+
         String expected = """
                 {
                     "id": 47,

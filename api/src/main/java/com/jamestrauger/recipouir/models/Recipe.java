@@ -3,7 +3,6 @@ package com.jamestrauger.recipouir.models;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerator;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import jakarta.persistence.CascadeType;
@@ -16,7 +15,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 
 @Entity
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -45,7 +43,6 @@ public class Recipe {
     public Recipe(String title, User user) {
         this.title = title;
         this.user = user;
-        // TODO: instantiate ingredients and steps lists ???
     }
 
     public Long getId() {

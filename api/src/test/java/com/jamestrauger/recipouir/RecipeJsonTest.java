@@ -23,7 +23,7 @@ import java.util.ArrayList;
 @JsonTest
 @TestInstance(Lifecycle.PER_CLASS)
 class RecipeJsonTest {
-    
+
     @Autowired
     private JacksonTester<Recipe> jsonRecipe;
     @Autowired
@@ -51,15 +51,11 @@ class RecipeJsonTest {
         Step step = new Step(recipe, "mix the ingredients", 1);
 
         JsonContent<Step> jsonStepObject = jsonStep.write(step);
-        assertThat(jsonStepObject)
-            .isStrictlyEqualToJson("expected-step.json");
-        assertThat(jsonStepObject)
-            .extractingJsonPathStringValue("@.description")
-            .isEqualTo(step.getDescription());
-        assertThat(jsonStepObject)
-            .extractingJsonPathValue("@.id")
-            .extracting("number")
-            .isEqualTo(step.getId().getNumber());
+        assertThat(jsonStepObject).isStrictlyEqualToJson("expected-step.json");
+        assertThat(jsonStepObject).extractingJsonPathStringValue("@.description")
+                .isEqualTo(step.getDescription());
+        assertThat(jsonStepObject).extractingJsonPathValue("@.id").extracting("number")
+                .isEqualTo(step.getId().getNumber());
     }
 
     @Test
@@ -83,34 +79,20 @@ class RecipeJsonTest {
 
     @Test
     void ingredientSerializationTest() throws IOException {
-        Ingredient ingredient = new Ingredient(
-            "sugar", 
-            recipe,
-            100,
-            new Fraction(1,1),
-            "grams"
-        );
+        Ingredient ingredient = new Ingredient("sugar", recipe, 100, new Fraction(1, 1), "grams");
 
         JsonContent<Ingredient> jsonIngredientObject = jsonIngredient.write(ingredient);
         assertThat(jsonIngredientObject).isStrictlyEqualToJson("expected-ingredient.json");
-        assertThat(jsonIngredientObject)
-            .extractingJsonPathValue("@.id")
-            .extracting("name")
-            .isEqualTo(ingredient.getName());
-        assertThat(jsonIngredientObject)
-            .extractingJsonPathStringValue("@.unit")
-            .isEqualTo(ingredient.getUnit());
-        assertThat(jsonIngredientObject)
-            .extractingJsonPathNumberValue("@.amount")
-            .isEqualTo(ingredient.getAmount());
-        assertThat(jsonIngredientObject)
-            .extractingJsonPathValue("@.partialAmount")
-            .extracting("numerator")
-            .isEqualTo(ingredient.getPartialAmount().numerator());
-        assertThat(jsonIngredientObject)
-            .extractingJsonPathValue("@.partialAmount")
-            .extracting("denominator")
-            .isEqualTo(ingredient.getPartialAmount().denominator());
+        assertThat(jsonIngredientObject).extractingJsonPathValue("@.id").extracting("name")
+                .isEqualTo(ingredient.getName());
+        assertThat(jsonIngredientObject).extractingJsonPathStringValue("@.unit")
+                .isEqualTo(ingredient.getUnit());
+        assertThat(jsonIngredientObject).extractingJsonPathNumberValue("@.amount")
+                .isEqualTo(ingredient.getAmount());
+        assertThat(jsonIngredientObject).extractingJsonPathValue("@.partialAmount")
+                .extracting("numerator").isEqualTo(ingredient.getPartialAmount().numerator());
+        assertThat(jsonIngredientObject).extractingJsonPathValue("@.partialAmount")
+                .extracting("denominator").isEqualTo(ingredient.getPartialAmount().denominator());
     }
 
     @Test
@@ -129,14 +111,8 @@ class RecipeJsonTest {
                 }
                 """;
         // expected
-        Ingredient ingredient = new Ingredient(
-            "sugar", 
-            recipe,
-            100,
-            new Fraction(1,1),
-            "grams"
-        );
-        //actual
+        Ingredient ingredient = new Ingredient("sugar", recipe, 100, new Fraction(1, 1), "grams");
+        // actual
         Ingredient parsedIngredient = jsonIngredient.parse(expected).getObject();
         parsedIngredient.setRecipe(recipe);
 
@@ -152,58 +128,33 @@ class RecipeJsonTest {
     @Test
     void recipeSerializationTest() throws IOException {
         // add ingredients
-        this.recipe.getIngredients().add(new Ingredient(
-            "sugar", 
-            recipe,
-            100,
-            new Fraction(1,1),
-            "grams"
-        ));
-        this.recipe.getIngredients().add(new Ingredient(
-            "butter", 
-            recipe,
-            1,
-            new Fraction(1,2),
-            "cups"
-        ));
+        this.recipe.getIngredients()
+                .add(new Ingredient("sugar", recipe, 100, new Fraction(1, 1), "grams"));
+        this.recipe.getIngredients()
+                .add(new Ingredient("butter", recipe, 1, new Fraction(1, 2), "cups"));
 
         // add steps
-        this.recipe.getSteps()
-            .add(new Step(recipe, "mix the ingredients", 1));
-        this.recipe.getSteps()
-            .add(new Step(recipe, "bake at 350", 2));
+        this.recipe.getSteps().add(new Step(recipe, "mix the ingredients", 1));
+        this.recipe.getSteps().add(new Step(recipe, "bake at 350", 2));
 
         JsonContent<Recipe> jsonRecipeObject = jsonRecipe.write(this.recipe);
-        assertThat(jsonRecipeObject)
-            .isStrictlyEqualToJson("expected-recipe.json");
-        assertThat(jsonRecipeObject)
-            .extractingJsonPathNumberValue("@.id")
-            .isEqualTo(99);
-        assertThat(jsonRecipeObject)
-            .extractingJsonPathStringValue("@.title")
-            .isEqualTo("Cookies");
-        assertThat(jsonRecipeObject)
-            .extractingJsonPathValue("@.user")
-            .extracting("id")
-            .isEqualTo(47);
-        assertThat(jsonRecipeObject)
-            .extractingJsonPathValue("user")
-            .extracting("username")
-            .isEqualTo(this.user.getUsername());
-        assertThat(jsonRecipeObject)
-            .extractingJsonPathValue("@.user")
-            .extracting("firstName")
-            .isEqualTo(this.user.getFirstName());
-        assertThat(jsonRecipeObject)
-            .extractingJsonPathValue("@.user")
-            .extracting("lastName")
-            .isEqualTo(this.user.getLastName());
+        assertThat(jsonRecipeObject).isStrictlyEqualToJson("expected-recipe.json");
+        assertThat(jsonRecipeObject).extractingJsonPathNumberValue("@.id").isEqualTo(99);
+        assertThat(jsonRecipeObject).extractingJsonPathStringValue("@.title").isEqualTo("Cookies");
+        assertThat(jsonRecipeObject).extractingJsonPathValue("@.user").extracting("id")
+                .isEqualTo(47);
+        assertThat(jsonRecipeObject).extractingJsonPathValue("user").extracting("username")
+                .isEqualTo(this.user.getUsername());
+        assertThat(jsonRecipeObject).extractingJsonPathValue("@.user").extracting("firstName")
+                .isEqualTo(this.user.getFirstName());
+        assertThat(jsonRecipeObject).extractingJsonPathValue("@.user").extracting("lastName")
+                .isEqualTo(this.user.getLastName());
         // assertThat(jsonRecipeObject)
-        //     .extractingJsonPathArrayValue("@.ingredients")
-        //     .containsOnly(recipe.getIngredients());
+        // .extractingJsonPathArrayValue("@.ingredients")
+        // .containsOnly(recipe.getIngredients());
     }
 
-    @Test 
+    @Test
     void recipeDeserializationTest() throws IOException {
         String expected = """
                 {
@@ -255,41 +206,24 @@ class RecipeJsonTest {
                     }
                 }
                 """;
-        
+
         Recipe serializedRecipe = jsonRecipe.parse(expected).getObject();
         serializedRecipe.setId(99L);
 
-        assertThat(serializedRecipe)
-            .isEqualTo(this.recipe);
-        assertThat(serializedRecipe.getId())
-            .isEqualTo(99);
-        assertThat(serializedRecipe.getTitle())
-            .isEqualTo("Cookies");
-        
+        assertThat(serializedRecipe).isEqualTo(this.recipe);
+        assertThat(serializedRecipe.getId()).isEqualTo(99);
+        assertThat(serializedRecipe.getTitle()).isEqualTo("Cookies");
+
         // expected ingredients
         ArrayList<Ingredient> ingredients = new ArrayList<>();
-        ingredients.add(new Ingredient(
-            "sugar", 
-            recipe,
-            100,
-            new Fraction(1,1),
-            "grams"
-        ));
-        ingredients.add(new Ingredient(
-            "butter", 
-            recipe,
-            1,
-            new Fraction(1,2),
-            "cups"
-        ));
-        assertThat(serializedRecipe.getIngredients())
-            .containsAll(ingredients);
-        
+        ingredients.add(new Ingredient("sugar", recipe, 100, new Fraction(1, 1), "grams"));
+        ingredients.add(new Ingredient("butter", recipe, 1, new Fraction(1, 2), "cups"));
+        assertThat(serializedRecipe.getIngredients()).containsAll(ingredients);
+
         // expected steps
         ArrayList<Step> steps = new ArrayList<>();
         steps.add(new Step(recipe, "mix the ingredients", 1));
         steps.add(new Step(recipe, "bake at 350", 2));
-        assertThat(serializedRecipe.getSteps())
-            .containsAll(steps);
+        assertThat(serializedRecipe.getSteps()).containsAll(steps);
     }
 }
