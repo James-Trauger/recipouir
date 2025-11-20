@@ -32,6 +32,12 @@ class RecipeController {
     @PostMapping
     private ResponseEntity<Void> createRecipe(@RequestBody Recipe recipeRequest,
             UriComponentsBuilder ucb) {
+
+        // TODO: replace with user authorization middleware
+        if (recipeRequest.getUser() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         Recipe savedRecipe = recipeRepository.save(recipeRequest);
         URI locationOfNewRecipe =
                 ucb.path("recipes/{id}").buildAndExpand(savedRecipe.getId()).toUri();
