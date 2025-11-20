@@ -18,6 +18,7 @@ import org.springframework.test.context.jdbc.Sql;
 import com.jamestrauger.recipouir.models.Fraction;
 import com.jamestrauger.recipouir.models.Ingredient;
 import com.jamestrauger.recipouir.models.Recipe;
+import com.jamestrauger.recipouir.models.Step;
 import com.jamestrauger.recipouir.models.User;
 import com.jamestrauger.recipouir.repositories.UserRepository;
 import com.jayway.jsonpath.DocumentContext;
@@ -60,9 +61,9 @@ class RecipeControllerTests {
 		String username = documentContext.read("$.user.username");
 		String firstName = documentContext.read("$.user.firstName");
 		String lastName = documentContext.read("$.user.lastName");
-		assertThat(username).isEqualTo("asoiaf");
-		assertThat(firstName).isEqualTo(firstName);
-		assertThat(lastName).isEqualTo(lastName);
+		assertThat(username).isEqualTo(user.getUsername());
+		assertThat(firstName).isEqualTo(user.getFirstName());
+		assertThat(lastName).isEqualTo(user.getLastName());
 
 		// ingredient fields
 
@@ -104,25 +105,82 @@ class RecipeControllerTests {
 
 		// add ingredients to recipe
 		ArrayList<Ingredient> ingredients = new ArrayList<Ingredient>();
-		ingredients.add(new Ingredient("cacao", recipe, 1, new Fraction(1, 4), "cups"));
+		ingredients.add(new Ingredient("cacao", recipe, 1, new Fraction(2, 3), "tbs"));
 		ingredients.add(new Ingredient("flour", recipe, 150, new Fraction(1, 1), "grams"));
 		recipe.setIngredients(ingredients);
+
+		// add steps to the recipe
+		ArrayList<Step> steps = new ArrayList<>();
+		steps.add(new Step(recipe, "combine cacao and flour", 1));
+		steps.add(new Step(recipe, "mix vigorously", 2));
+		recipe.setSteps(steps);
 
 		ResponseEntity<Void> createResponse =
 				restTemplate.postForEntity("/recipes", recipe, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
+		// retrieve the newly created recipe
 		URI locationOfNewRecipe = createResponse.getHeaders().getLocation();
 		ResponseEntity<String> getResponse =
 				restTemplate.getForEntity(locationOfNewRecipe, String.class);
 
 		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
 
+		String title = documentContext.read("$.title");
+		assertThat(title).isEqualTo(recipe.getTitle());
+		// generated id
+		Number id = documentContext.read("$.id");
+		assertThat(id).isNotNull();
+
 		// ingredient fields
 
 		List<Number> amounts = documentContext.read("$.ingredients[*].amount");
 		assertThat(amounts).containsExactly(1, 150);
+
+		List<String> units = documentContext.read("$.ingredients[*].unit");
+		assertThat(units).containsExactly("tbs", "grams");
+
+		List<String> names = documentContext.read("$.ingredients[*].id.name");
+		assertThat(names).containsExactly("cacao", "flour");
+
+		List<Number> numerators = documentContext.read("$.ingredients[*].partialAmount.numerator");
+		assertThat(numerators).containsExactly(2, 1);
+		List<Number> denominators =
+				documentContext.read("$.ingredients[*].partialAmount.denominator");
+		assertThat(denominators).containsExactly(3, 1);
+
+		// step fields
+
+		List<String> descriptions = documentContext.read("$.steps[*].description");
+		assertThat(descriptions).containsExactly("combine cacao and flour", "mix vigorously");
+
+		List<Number> numbers = documentContext.read("$.steps[*].id.number");
+		assertThat(numbers).containsExactly(1, 2);
+
+		// user fields
+		String username = documentContext.read("$.user.username");
+		String firstName = documentContext.read("$.user.firstName");
+		String lastName = documentContext.read("$.user.lastName");
+		assertThat(username).isEqualTo(user.getUsername());
+		assertThat(firstName).isEqualTo(user.getFirstName());
+		assertThat(lastName).isEqualTo(user.getLastName());
 	}
 
+
+	@Test
+	void shouldNotCreateRecipeWithInvalidUser() {
+		// user not in database
+		User nonExistentUser = new User("tylan", "Tyrion", "Lannister");
+
+		// recipe withour a user
+		Recipe recipe = new Recipe("Apple Pie", null);
+
+		ResponseEntity<Void> createResponse =
+				restTemplate.postForEntity("/recipes", recipe, Void.class);
+
+		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+
+	}
 }
