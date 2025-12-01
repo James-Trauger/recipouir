@@ -1,6 +1,7 @@
 {
     "id": 99,
     "title": "Cookies",
+    "servings": 5,
     "ingredients": [
         {
             "id": {

@@ -1,7 +1,7 @@
 package com.jamestrauger.recipouir.models;
 
 import java.util.List;
-
+import org.hibernate.annotations.ColumnDefault;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
@@ -15,17 +15,21 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.Min;
 
 @Entity
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-//@Table(name = "recipe")
+// @Table(name = "recipe")
 public class Recipe {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @Column(length = 31, nullable = false)
     private String title;
+    @ColumnDefault("1")
+    @Min(1)
+    private int servings;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by")
@@ -38,11 +42,12 @@ public class Recipe {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Step> steps;
 
-    protected Recipe () {}
-    
-    public Recipe(String title, User user) {
+    protected Recipe() {}
+
+    public Recipe(String title, User user, int servings) {
         this.title = title;
         this.user = user;
+        this.servings = servings;
     }
 
     public Long getId() {
@@ -51,6 +56,10 @@ public class Recipe {
 
     public String getTitle() {
         return this.title;
+    }
+
+    public int getServings() {
+        return this.servings;
     }
 
     public User getUser() {
@@ -73,6 +82,10 @@ public class Recipe {
         this.title = title;
     }
 
+    public void setServings(int servings) {
+        this.servings = servings;
+    }
+
     public void setUser(User user) {
         this.user = user;
     }
@@ -85,18 +98,18 @@ public class Recipe {
         this.steps = steps;
     }
 
-    @Override  
+    @Override
     public boolean equals(Object o) {
 
         if (this == o)
             return true;
         if (!(o instanceof Recipe))
             return false;
-        
+
         Recipe rec = (Recipe) o;
-        return this.id.equals(rec.id) 
-            //&& this.user.equals(rec.user)
-            && this.title.equals(rec.title);
+        return this.id.equals(rec.id)
+                // && this.user.equals(rec.user)
+                && this.title.equals(rec.title);
     }
 
     @Override

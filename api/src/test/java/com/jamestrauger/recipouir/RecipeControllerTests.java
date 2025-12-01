@@ -57,6 +57,9 @@ class RecipeControllerTests {
 		String title = documentContext.read("$.title");
 		assertThat(title).isEqualTo("Cookies");
 
+		Number servings = documentContext.read("$.servings");
+		assertThat(servings).isEqualTo(5);
+
 		// user fields
 		String username = documentContext.read("$.user.username");
 		String firstName = documentContext.read("$.user.firstName");
@@ -101,7 +104,7 @@ class RecipeControllerTests {
 
 	@Test
 	void shouldCreateANewRecipe() {
-		Recipe recipe = new Recipe("brownies", user);
+		Recipe recipe = new Recipe("brownies", user, 3);
 
 		// add ingredients to recipe
 		ArrayList<Ingredient> ingredients = new ArrayList<Ingredient>();
@@ -129,9 +132,13 @@ class RecipeControllerTests {
 
 		String title = documentContext.read("$.title");
 		assertThat(title).isEqualTo(recipe.getTitle());
+
 		// generated id
 		Number id = documentContext.read("$.id");
 		assertThat(id).isNotNull();
+
+		Number servings = documentContext.read("$.servings");
+		assertThat(servings).isEqualTo(3);
 
 		// ingredient fields
 
@@ -174,7 +181,7 @@ class RecipeControllerTests {
 		User nonExistentUser = new User("tylan", "Tyrion", "Lannister");
 
 		// recipe withour a user
-		Recipe recipe = new Recipe("Apple Pie", null);
+		Recipe recipe = new Recipe("Apple Pie", null, 1);
 
 		ResponseEntity<Void> createResponse =
 				restTemplate.postForEntity("/recipes", recipe, Void.class);

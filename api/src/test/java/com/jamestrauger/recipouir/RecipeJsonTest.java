@@ -40,7 +40,7 @@ class RecipeJsonTest {
         this.user = new User("asoiaf", "ned", "stark");
         this.user.setId(47L);
 
-        this.recipe = new Recipe("Cookies", user);
+        this.recipe = new Recipe("Cookies", user, 5);
         this.recipe.setId(99L);
         this.recipe.setIngredients(new ArrayList<Ingredient>());
         this.recipe.setSteps(new ArrayList<Step>());
@@ -143,6 +143,7 @@ class RecipeJsonTest {
         assertThat(jsonRecipeObject).extractingJsonPathStringValue("@.title").isEqualTo("Cookies");
         assertThat(jsonRecipeObject).extractingJsonPathValue("@.user").extracting("id")
                 .isEqualTo(47);
+        assertThat(jsonRecipeObject).extractingJsonPathNumberValue("@.servings").isEqualTo(5);
         assertThat(jsonRecipeObject).extractingJsonPathValue("user").extracting("username")
                 .isEqualTo(this.user.getUsername());
         assertThat(jsonRecipeObject).extractingJsonPathValue("@.user").extracting("firstName")
@@ -160,6 +161,7 @@ class RecipeJsonTest {
                 {
                     "id": 99,
                     "title": "Cookies",
+                    "servings": 5,
                     "ingredients": [
                         {
                             "id": {
@@ -213,6 +215,7 @@ class RecipeJsonTest {
         assertThat(serializedRecipe).isEqualTo(this.recipe);
         assertThat(serializedRecipe.getId()).isEqualTo(99);
         assertThat(serializedRecipe.getTitle()).isEqualTo("Cookies");
+        assertThat(serializedRecipe.getServings()).isEqualTo(5);
 
         // expected ingredients
         ArrayList<Ingredient> ingredients = new ArrayList<>();
