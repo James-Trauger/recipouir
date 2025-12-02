@@ -1,0 +1,117 @@
+[
+    {
+        "id": 99,
+        "title": "Cookies",
+        "servings": 5,
+        "ingredients": [
+            {
+                "id": {
+                    "name": "sugar"
+                },
+                "amount": 100,
+                "unit": "grams",
+                "partialAmount": {
+                    "numerator": 1,
+                    "denominator": 1
+                }
+            },
+            {
+                "id": {
+                    "name": "butter"
+                },
+                "amount": 1,
+                "unit": "cups",
+                "partialAmount": {
+                    "numerator": 1,
+                    "denominator": 2
+                }
+            }
+        ],
+        "steps": [
+            {
+                "id": {
+                    "number": 1
+                },
+                "description": "mix the ingredients"
+            },
+            {
+                "id": {
+                    "number": 2
+                },
+                "description": "bake at 350"
+            }
+        ],
+        "user": {
+            "id": 47,
+            "username": "asoiaf",
+            "firstName": "ned",
+            "lastName": "stark"
+        }
+    },
+    {
+        "id": 100,
+        "title": "Apple Pie",
+        "servings": 6,
+        "ingredients": [
+            {
+                "id": {
+                    "name": "flour"
+                },
+                "amount": 300,
+                "unit": "grams",
+                "partialAmount": {
+                    "numerator": 1,
+                    "denominator": 1
+                }
+            },
+            {
+                "id": {
+                    "name": "water"
+                },
+                "amount": 150,
+                "unit": "ml",
+                "partialAmount": {
+                    "numerator": 1,
+                    "denominator": 1
+                }
+            },
+            {
+                "id": {
+                    "name": "apples"
+                },
+                "amount": 2,
+                "unit": "cups",
+                "partialAmount": {
+                    "numerator": 2,
+                    "denominator": 3
+                }
+            }
+        ],
+        "steps": [
+            {
+                "id": {
+                    "number": 1
+                },
+                "description": "combine flour and water"
+            },
+            {
+                "id": {
+                    "number": 2
+                },
+                "description": "cut apples into pieces"
+            },
+            {
+                "id": {
+                    "number": 3
+                },
+                "description": "mix everything and bake"
+            }
+        ],
+        "user": {
+            "id": 47,
+            "username": "asoiaf",
+            "firstName": "ned",
+            "lastName": "stark"
+        }
+    }
+]
