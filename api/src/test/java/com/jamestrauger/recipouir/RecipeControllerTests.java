@@ -44,7 +44,8 @@ class RecipeControllerTests {
 
 	@Test
 	void shouldReturnARecipeWhenDataIsSaved() {
-		ResponseEntity<String> response = restTemplate.getForEntity("/recipes/99", String.class);
+		ResponseEntity<String> response = restTemplate.withBasicAuth("asoiaf", "honor")
+				.getForEntity("/recipes/99", String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -96,7 +97,8 @@ class RecipeControllerTests {
 
 	@Test
 	void shouldNotReturnARecipeWithAnUnknownId() {
-		ResponseEntity<String> response = restTemplate.getForEntity("/recipes/1000", String.class);
+		ResponseEntity<String> response = restTemplate.withBasicAuth("asoiaf", "honor")
+				.getForEntity("/recipes/1000", String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(response.getBody()).isBlank();
@@ -118,15 +120,15 @@ class RecipeControllerTests {
 		steps.add(new Step(recipe, "mix vigorously", 2));
 		recipe.setSteps(steps);
 
-		ResponseEntity<Void> createResponse =
-				restTemplate.postForEntity("/recipes", recipe, Void.class);
+		ResponseEntity<Void> createResponse = restTemplate.withBasicAuth("asoiaf", "honor")
+				.postForEntity("/recipes", recipe, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 		// retrieve the newly created recipe
 		URI locationOfNewRecipe = createResponse.getHeaders().getLocation();
-		ResponseEntity<String> getResponse =
-				restTemplate.getForEntity(locationOfNewRecipe, String.class);
+		ResponseEntity<String> getResponse = restTemplate.withBasicAuth("asoiaf", "honor")
+				.getForEntity(locationOfNewRecipe, String.class);
 
 		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
 
@@ -177,14 +179,12 @@ class RecipeControllerTests {
 
 	@Test
 	void shouldNotCreateRecipeWithInvalidUser() {
-		// user not in database
-		User nonExistentUser = new User("tylan", "Tyrion", "Lannister");
 
 		// recipe withour a user
 		Recipe recipe = new Recipe("Apple Pie", null, 1);
 
-		ResponseEntity<Void> createResponse =
-				restTemplate.postForEntity("/recipes", recipe, Void.class);
+		ResponseEntity<Void> createResponse = restTemplate.withBasicAuth("asoiaf", "honor")
+				.postForEntity("/recipes", recipe, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
