@@ -26,8 +26,6 @@ public class User {
     // hashed password
     @JsonIgnore
     private String password;
-    @JsonIgnore
-    private String email;
 
     protected User() {}
 
