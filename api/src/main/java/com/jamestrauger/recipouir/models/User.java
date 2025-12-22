@@ -55,10 +55,6 @@ public class User {
         return this.password;
     }
 
-    public String getEmail() {
-        return this.email;
-    }
-
     // public List<Recipe> getRecipes() {
     // return this.recipes;
     // }
@@ -81,10 +77,6 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     // public void setRecipes(List<Recipe> recipes) {
