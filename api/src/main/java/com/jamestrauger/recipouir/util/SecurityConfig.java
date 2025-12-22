@@ -19,9 +19,11 @@ class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(
-                request -> request.requestMatchers("/recipes/**").authenticated())
-                .httpBasic(Customizer.withDefaults()).csrf(csrf -> csrf.disable());
+        http
+                .authorizeHttpRequests(
+                        request -> request.requestMatchers("/recipes/**").authenticated())
+                .httpBasic(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable());
         return http.build();
     }
 
@@ -33,8 +35,11 @@ class SecurityConfig {
     @Bean
     UserDetailsService testOnlyUsers(PasswordEncoder passwordEncoder) {
         User.UserBuilder users = User.builder();
-        UserDetails ned =
-                users.username("asoiaf").password(passwordEncoder.encode("honor")).roles().build();
+        UserDetails ned = users
+                .username("asoiaf")
+                .password(passwordEncoder.encode("honor"))
+                .roles()
+                .build();
         return new InMemoryUserDetailsManager(ned);
     }
 }
