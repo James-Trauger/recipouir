@@ -23,7 +23,7 @@ class SecurityConfig {
                 .authorizeHttpRequests(
                         request -> request.requestMatchers("/recipes/**").authenticated())
                 .httpBasic(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable());
+                .csrf(csrf -> csrf.disable()); // TODO disbale sessions when csrf is disabled
         return http.build();
     }
 
