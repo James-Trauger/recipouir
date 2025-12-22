@@ -2,6 +2,9 @@ package com.jamestrauger.recipouir.util;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -21,10 +24,24 @@ class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(
-                        request -> request.requestMatchers("/recipes/**").authenticated())
+                        request -> request
+                                // requests made to /recipes require authentication
+                                .requestMatchers("/recipes/**").authenticated()
+                                // requests made to /auth are allowed
+                                .requestMatchers("/auth/**").permitAll())
                 .httpBasic(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable()); // TODO disbale sessions when csrf is disabled
+                .csrf(csrf -> csrf.disable()) // TODO disbale sessions when csrf is disabled
+                .formLogin(Customizer.withDefaults());
         return http.build();
+    }
+
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider authenticationProvider =
+                new DaoAuthenticationProvider(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+
+        return new ProviderManager(authenticationProvider);
     }
 
     @Bean
