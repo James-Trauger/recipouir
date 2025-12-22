@@ -1,5 +1,6 @@
 package com.jamestrauger.recipouir.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,9 +9,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name  = "users") // postgres has default table 'user' already
+@Table(name = "users") // postgres has default table 'user' already
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -22,6 +23,11 @@ public class User {
     private String lastName;
     // @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     // private List<Recipe> recipes;
+    // hashed password
+    @JsonIgnore
+    private String password;
+    @JsonIgnore
+    private String email;
 
     protected User() {}
 
@@ -47,8 +53,16 @@ public class User {
         return this.lastName;
     }
 
+    public String getPassword() {
+        return this.password;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
     // public List<Recipe> getRecipes() {
-    //     return this.recipes;
+    // return this.recipes;
     // }
 
     public void setId(Long id) {
@@ -67,14 +81,22 @@ public class User {
         this.lastName = lastName;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     // public void setRecipes(List<Recipe> recipes) {
-    //     this.recipes = recipes;
+    // this.recipes = recipes;
     // }
 
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) 
+        if (this == o)
             return true;
         if (!(o instanceof User)) {
             return false;
@@ -82,9 +104,8 @@ public class User {
 
         User user = (User) o;
 
-        return this.id.equals(user.getId()) 
-            && this.username.equals(user.username)
-            && this.firstName.equals(user.getFirstName())
-            && this.lastName.equals(user.getLastName());
+        return this.id.equals(user.getId()) && this.username.equals(user.username)
+                && this.firstName.equals(user.getFirstName())
+                && this.lastName.equals(user.getLastName());
     }
 }
