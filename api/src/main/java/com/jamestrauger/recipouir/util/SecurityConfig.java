@@ -36,6 +36,7 @@ class SecurityConfig {
         return http.build();
     }
 
+    @Bean
     public AuthenticationManager authenticationManager(UserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authenticationProvider =
@@ -50,7 +51,7 @@ class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
+    //@Bean
     UserDetailsService testOnlyUsers(PasswordEncoder passwordEncoder) {
         User.UserBuilder users = User.builder();
         UserDetails ned = users

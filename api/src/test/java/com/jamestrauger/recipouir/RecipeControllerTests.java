@@ -27,7 +27,8 @@ import com.jayway.jsonpath.JsonPath;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
-@Sql(scripts = "classpath:data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
+// uncomment when using docker as the test database source
+//@Sql(scripts = "classpath:data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
 class RecipeControllerTests {
 
 	@Autowired
