@@ -37,7 +37,8 @@ class RecipeJsonTest {
 
     @BeforeAll
     private void instantiateFields() {
-        this.user = new User("asoiaf", "ned", "stark");
+        this.user = new User("asoiaf", "ned", "stark",
+                "$2a$10$SaU8AfqGvUoeLIaJ2W7KY.e3ybJ5RC9mkQxiwFN3tBqu2Jj1vb.XW");
         this.user.setId(47L);
 
         this.recipe = new Recipe("Cookies", user, 5);

@@ -2,6 +2,8 @@ package com.jamestrauger.recipouir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,16 +13,20 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.jdbc.Sql;
 import com.jamestrauger.recipouir.models.Fraction;
 import com.jamestrauger.recipouir.models.Ingredient;
 import com.jamestrauger.recipouir.models.Recipe;
 import com.jamestrauger.recipouir.models.Step;
 import com.jamestrauger.recipouir.models.User;
-import com.jamestrauger.recipouir.repositories.UserRepository;
+import com.jamestrauger.recipouir.security.JwtUtil;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 
@@ -28,25 +34,43 @@ import com.jayway.jsonpath.JsonPath;
 @TestInstance(Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 // uncomment when using docker as the test database source
-//@Sql(scripts = "classpath:data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
+// @Sql(scripts = "classpath:data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
 class RecipeControllerTests {
 
 	@Autowired
 	TestRestTemplate restTemplate;
+	@Autowired
+	AuthenticationManager authenticationManager;
+	@Autowired
+	JwtUtil jwtUtil;
 
 	// sample user from database
 	private User user;
+	// jwt token
+	private String token;
 
 	@BeforeAll
-	private void insantiateUser() {
-		user = new User("asoiaf", "ned", "stark");
+	private void insantiateToken() {
+		// password is "honor"
+		user = new User("asoiaf", "ned", "stark",
+				"honor");
 		user.setId(47L);
+
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(
+						user.getUsername(),
+						user.getPassword()));
+
+		final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		this.token = jwtUtil.generateToken(userDetails.getUsername());
 	}
 
 	@Test
 	void shouldReturnARecipeWhenDataIsSaved() {
-		ResponseEntity<String> response = restTemplate.withBasicAuth("asoiaf", "honor")
-				.getForEntity("/recipes/99", String.class);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer " + token);
+		ResponseEntity<String> response = restTemplate.exchange("/recipes/99", HttpMethod.GET,
+				new HttpEntity<>(headers), String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -98,8 +122,11 @@ class RecipeControllerTests {
 
 	@Test
 	void shouldNotReturnARecipeWithAnUnknownId() {
-		ResponseEntity<String> response = restTemplate.withBasicAuth("asoiaf", "honor")
-				.getForEntity("/recipes/1000", String.class);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer " + token);
+
+		ResponseEntity<String> response = restTemplate.exchange("/recipes/100", HttpMethod.GET,
+				new HttpEntity<>(headers), String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(response.getBody()).isBlank();
@@ -121,15 +148,20 @@ class RecipeControllerTests {
 		steps.add(new Step(recipe, "mix vigorously", 2));
 		recipe.setSteps(steps);
 
-		ResponseEntity<Void> createResponse = restTemplate.withBasicAuth("asoiaf", "honor")
-				.postForEntity("/recipes", recipe, Void.class);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer " + token);
+		HttpEntity<Recipe> recipeRequest = new HttpEntity<Recipe>(recipe, headers);
+		ResponseEntity<Void> createResponse = restTemplate.exchange("/recipes", HttpMethod.POST,
+				recipeRequest, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 		// retrieve the newly created recipe
 		URI locationOfNewRecipe = createResponse.getHeaders().getLocation();
-		ResponseEntity<String> getResponse = restTemplate.withBasicAuth("asoiaf", "honor")
-				.getForEntity(locationOfNewRecipe, String.class);
+
+		ResponseEntity<String> getResponse =
+				restTemplate.exchange(locationOfNewRecipe, HttpMethod.GET,
+						new HttpEntity<>(headers), String.class);
 
 		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
 
@@ -184,8 +216,11 @@ class RecipeControllerTests {
 		// recipe withour a user
 		Recipe recipe = new Recipe("Apple Pie", null, 1);
 
-		ResponseEntity<Void> createResponse = restTemplate.withBasicAuth("asoiaf", "honor")
-				.postForEntity("/recipes", recipe, Void.class);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer " + token);
+		HttpEntity<Recipe> recipeRequest = new HttpEntity<Recipe>(recipe, headers);
+		ResponseEntity<Void> createResponse = restTemplate.exchange("/recipes", HttpMethod.POST,
+				recipeRequest, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 

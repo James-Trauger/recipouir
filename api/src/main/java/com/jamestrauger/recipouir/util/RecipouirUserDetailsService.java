@@ -1,10 +1,6 @@
 package com.jamestrauger.recipouir.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,6 +12,7 @@ import com.jamestrauger.recipouir.repositories.UserRepository;
 public class RecipouirUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
+    @Autowired
     public RecipouirUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }

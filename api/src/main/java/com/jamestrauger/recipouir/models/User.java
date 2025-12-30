@@ -29,10 +29,11 @@ public class User {
 
     protected User() {}
 
-    public User(String username, String firstName, String lastName) {
+    public User(String username, String firstName, String lastName, String password) {
         this.username = username;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.password = password;
     }
 
     public Long getId() {

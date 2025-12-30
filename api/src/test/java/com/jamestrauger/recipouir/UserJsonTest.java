@@ -22,8 +22,10 @@ class UserJsonTest {
         String username = "asoiaf";
         String firstName = "ned";
         String lastName = "stark";
+        // honor
+        String password = "$2a$10$SaU8AfqGvUoeLIaJ2W7KY.e3ybJ5RC9mkQxiwFN3tBqu2Jj1vb.XW";
 
-        User user = new User(username, firstName, lastName);
+        User user = new User(username, firstName, lastName, password);
         user.setId(47L);
 
         assertThat(json.write(user)).isStrictlyEqualToJson("expected-user.json");
@@ -34,7 +36,10 @@ class UserJsonTest {
         String username = "asoiaf";
         String firstName = "ned";
         String lastName = "stark";
-        User user = new User(username, firstName, lastName);
+        // honor
+        String password = "$2a$10$SaU8AfqGvUoeLIaJ2W7KY.e3ybJ5RC9mkQxiwFN3tBqu2Jj1vb.XW";
+        User user = new User(username, firstName, lastName, password);
+
         user.setId(47L);
 
         String expected = """
