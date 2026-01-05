@@ -20,6 +20,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import com.jamestrauger.recipouir.models.Fraction;
 import com.jamestrauger.recipouir.models.Ingredient;
@@ -29,6 +30,7 @@ import com.jamestrauger.recipouir.models.User;
 import com.jamestrauger.recipouir.security.JwtUtil;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import net.minidev.json.JSONArray;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(Lifecycle.PER_CLASS)
@@ -69,8 +71,10 @@ class RecipeControllerTests {
 	void shouldReturnARecipeWhenDataIsSaved() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Authorization", "Bearer " + token);
-		ResponseEntity<String> response = restTemplate.exchange("/recipes/99", HttpMethod.GET,
-				new HttpEntity<>(headers), String.class);
+		ResponseEntity<String> response =
+				restTemplate.exchange("/api/v1/recipes/" + user.getUsername() + "/99",
+						HttpMethod.GET,
+						new HttpEntity<>(headers), String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -125,14 +129,17 @@ class RecipeControllerTests {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Authorization", "Bearer " + token);
 
-		ResponseEntity<String> response = restTemplate.exchange("/recipes/100", HttpMethod.GET,
-				new HttpEntity<>(headers), String.class);
+		ResponseEntity<String> response =
+				restTemplate.exchange("/api/v1/recipes/" + user.getUsername() + "/999",
+						HttpMethod.GET,
+						new HttpEntity<>(headers), String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(response.getBody()).isBlank();
 	}
 
 	@Test
+	@DirtiesContext
 	void shouldCreateANewRecipe() {
 		Recipe recipe = new Recipe("brownies", user, 3);
 
@@ -151,13 +158,15 @@ class RecipeControllerTests {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Authorization", "Bearer " + token);
 		HttpEntity<Recipe> recipeRequest = new HttpEntity<Recipe>(recipe, headers);
-		ResponseEntity<Void> createResponse = restTemplate.exchange("/recipes", HttpMethod.POST,
-				recipeRequest, Void.class);
+		ResponseEntity<Void> createResponse =
+				restTemplate.exchange("/api/v1/recipes", HttpMethod.POST,
+						recipeRequest, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 		// retrieve the newly created recipe
 		URI locationOfNewRecipe = createResponse.getHeaders().getLocation();
+
 
 		ResponseEntity<String> getResponse =
 				restTemplate.exchange(locationOfNewRecipe, HttpMethod.GET,
@@ -219,11 +228,42 @@ class RecipeControllerTests {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Authorization", "Bearer " + token);
 		HttpEntity<Recipe> recipeRequest = new HttpEntity<Recipe>(recipe, headers);
-		ResponseEntity<Void> createResponse = restTemplate.exchange("/recipes", HttpMethod.POST,
-				recipeRequest, Void.class);
+		ResponseEntity<Void> createResponse =
+				restTemplate.exchange("/api/v1/recipes", HttpMethod.POST,
+						recipeRequest, Void.class);
 
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
 
+	@Test
+	void shouldReturnListRecipes() {
+		ResponseEntity<String> response =
+				restTemplate.getForEntity("/api/v1/recipes/" + user.getUsername(),
+						String.class);
 
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int recipeCount = documentContext.read("$.length()");
+		assertThat(recipeCount).isEqualTo(3);
+
+		JSONArray ids = documentContext.read("$[*].id");
+		assertThat(ids).containsExactlyInAnyOrder(99, 100, 101);
+
+		JSONArray titles = documentContext.read("$[*].title");
+		assertThat(titles).containsExactlyInAnyOrder("Cookies", "Cake", "Apple Pie");
+	}
+
+	@Test
+	void shouldReturnAPageOfRecipes() {
+		ResponseEntity<String> response =
+				restTemplate.getForEntity(
+						"/api/v1/recipes/" + user.getUsername() + "?page=0&size=1", String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray page = documentContext.read("$[*]");
+		assertThat(page.size()).isEqualTo(1);
 	}
 }
